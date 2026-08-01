@@ -1,4 +1,4 @@
-# authentication_app
+# authentication-app
 
 A new Flutter project.
 

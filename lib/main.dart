@@ -1,5 +1,6 @@
 import 'package:authentication_app/firebase_options.dart';
 import 'package:authentication_app/utils/login_util.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -40,19 +41,23 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final LoginUtil _loginUtil = LoginUtil();
   bool _isLoading = false;
-  String _message = '테스트용 구글 로그인 버튼입니다.';
+  String _message = '테스트용 로그인 버튼입니다.';
 
-  Future<void> _signInWithGoogle() async {
+  Future<void> _signInWithGoogle() => _signIn(_loginUtil.signInWithGoogle);
+
+  Future<void> _signInWithApple() => _signIn(_loginUtil.signInWithApple);
+
+  Future<void> _signIn(Future<UserCredential> Function() signInMethod) async {
     setState(() {
       _isLoading = true;
       _message = '로그인 시도 중...';
     });
 
     try {
-      final result = await _loginUtil.signInWithGoogle();
+      final result = await signInMethod();
       if (!mounted) return;
       setState(() {
-        _message = '로그인 성공: ${result.user?.email ?? '알 수 없음'}';
+        _message = '로그인 성공: ${result.user?.uid}';
       });
     } catch (error) {
       if (!mounted) return;
@@ -72,7 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Google Login Test'),
+        title: const Text('Login Test'),
       ),
       body: Center(
         child: Padding(
@@ -99,6 +104,21 @@ class _MyHomePageState extends State<MyHomePage> {
                         )
                       : const Icon(Icons.login),
                   label: Text(_isLoading ? '로그인 중...' : '구글 로그인'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _signInWithApple,
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.apple),
+                  label: Text(_isLoading ? '로그인 중...' : '애플 로그인'),
                 ),
               ),
             ],

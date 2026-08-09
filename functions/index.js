@@ -7,10 +7,10 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-const {onRequest} = require("firebase-functions/v2/https");
-const logger = require("firebase-functions/logger");
-const admin = require("firebase-admin");
-const appleSignin = require("apple-signin-auth");
+const { onRequest } = require('firebase-functions/v2/https');
+const logger = require('firebase-functions/logger');
+const admin = require('firebase-admin');
+const appleSignin = require('apple-signin-auth');
 
 admin.initializeApp();
 
@@ -18,16 +18,17 @@ admin.initializeApp();
 //   iOS 앱에서 로그인 → App ID(번들 ID)
 //   웹/안드로이드에서 로그인 → Services ID
 // 어느 쪽으로 들어온 유저인지 알 수 없으므로 둘 다 허용한다.
+//https://developer.apple.com/account/resources/identifiers/list/bundleId
 const APPLE_AUDIENCE = [
-  "com.codewithsora.authentication.authenticationApp",
-  "com.codewithsora.authentication.authenticationApp.service",
+  'com.change.to.your.bundle.id', //indeitifer->appid 에서 확인
+  'com.change.to.your.service.id', //indeitifer->services id로 필터바꾼뒤  확인
 ];
 
 // Sign in with Apple 서버 간 알림(Server-to-Server Notifications) 엔드포인트.
 // 유저가 애플 계정을 삭제하거나 우리 앱과의 연동을 끊으면 Apple이 이 URL로 알려준다.
 // 배포 후 나오는 URL을 Services ID 설정의 Server-to-Server Notification Endpoint 에 등록.
 exports.appleServerToServerNotification = onRequest(async (req, response) => {
-  if (req.method !== "POST") {
+  if (req.method !== 'POST') {
     response.sendStatus(405);
     return;
   }
@@ -35,23 +36,23 @@ exports.appleServerToServerNotification = onRequest(async (req, response) => {
   try {
     // payload는 Apple이 서명한 JWS. 검증에 실패하면 예외가 발생하므로
     // 이 줄을 통과했다는 건 "진짜 Apple이 보낸 알림"이라는 뜻이다.
-    const {events} = await appleSignin.verifyWebhookToken(req.body.payload, {
+    const { events } = await appleSignin.verifyWebhookToken(req.body.payload, {
       audience: APPLE_AUDIENCE,
     });
 
-    const {sub: appleUserId, type} = events;
+    const { sub: appleUserId, type } = events;
     logger.info(`[Apple 알림 수신] type=${type}, sub=${appleUserId}`);
 
     switch (type) {
-      case "email-disabled":
-      case "email-enabled":
+      case 'email-disabled':
+      case 'email-enabled':
         // 이메일 릴레이(Hide My Email) 전달 설정이 켜지거나 꺼짐
         break;
-      case "consent-revoked":
+      case 'consent-revoked':
         // 유저가 이 앱과의 애플 계정 연동을 끊음 -> 로그아웃 처리 대상
         break;
-      case "account-delete":
-      case "account-deleted":
+      case 'account-delete':
+      case 'account-deleted':
         // 애플 계정 자체가 영구 삭제됨.
         // 애플 공식 문서는 account-deleted, 일부 라이브러리/예제는 account-delete로
         // 표기가 갈린다. 놓치면 안 되는 이벤트라 둘 다 받아둔다.
@@ -70,7 +71,7 @@ exports.appleServerToServerNotification = onRequest(async (req, response) => {
 
     response.sendStatus(200);
   } catch (error) {
-    logger.error("Apple 알림 검증 실패", error);
+    logger.error('Apple 알림 검증 실패', error);
     response.sendStatus(500);
   }
 });

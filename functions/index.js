@@ -18,10 +18,10 @@ admin.initializeApp();
 //   iOS 앱에서 로그인 → App ID(번들 ID)
 //   웹/안드로이드에서 로그인 → Services ID
 // 어느 쪽으로 들어온 유저인지 알 수 없으므로 둘 다 허용한다.
-//https://developer.apple.com/account/resources/identifiers/list/bundleId
+// https://developer.apple.com/account/resources/identifiers/list/bundleId
 const APPLE_AUDIENCE = [
-  'com.change.to.your.bundle.id', //indeitifer->appid 에서 확인
-  'com.change.to.your.service.id', //indeitifer->services id로 필터바꾼뒤  확인
+  'com.change.to.your.bundle.id', // indeitifer->appid 에서 확인
+  'com.change.to.your.service.id', // indeitifer->services id로 필터바꾼뒤  확인
 ];
 
 // Sign in with Apple 서버 간 알림(Server-to-Server Notifications) 엔드포인트.

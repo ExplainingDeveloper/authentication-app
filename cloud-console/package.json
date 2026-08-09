@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.0.0",
+    "apple-signin-auth": "^2.1.0",
+    "firebase-admin": "^11.8.0",
+    "firebase-functions": "^4.3.1"
+  }
+}

@@ -1,1 +1,56 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"authentication-app-c1cbb","appId":"1:549760059710:android:4e3ae93b58e6e20208046f","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"authentication-app-c1cbb","appId":"1:549760059710:ios:5ee39afb268bc1f908046f","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"authentication-app-c1cbb","configurations":{"android":"1:549760059710:android:4e3ae93b58e6e20208046f","ios":"1:549760059710:ios:5ee39afb268bc1f908046f","macos":"1:549760059710:ios:5ee39afb268bc1f908046f","web":"1:549760059710:web:78a437c570c5640508046f","windows":"1:549760059710:web:3edc0db2a3ddfa7f08046f"}}},"macos":{"default":{"projectId":"authentication-app-c1cbb","appId":"1:549760059710:ios:5ee39afb268bc1f908046f","uploadDebugSymbols":false,"fileOutput":"macos/Runner/GoogleService-Info.plist"}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "authentication-app-c1cbb",
+          "appId": "1:549760059710:android:4e3ae93b58e6e20208046f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "authentication-app-c1cbb",
+          "appId": "1:549760059710:ios:5ee39afb268bc1f908046f",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "authentication-app-c1cbb",
+          "configurations": {
+            "android": "1:549760059710:android:4e3ae93b58e6e20208046f",
+            "ios": "1:549760059710:ios:5ee39afb268bc1f908046f",
+            "macos": "1:549760059710:ios:5ee39afb268bc1f908046f",
+            "web": "1:549760059710:web:78a437c570c5640508046f",
+            "windows": "1:549760059710:web:3edc0db2a3ddfa7f08046f"
+          }
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "authentication-app-c1cbb",
+          "appId": "1:549760059710:ios:5ee39afb268bc1f908046f",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" --script-shell=/bin/sh run lint"
+      ]
+    }
+  ]
+}

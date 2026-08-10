@@ -34,7 +34,7 @@ migrate_working_dir/
 /coverage/
 
 # Project docs and local Firebase config
-docs/
+.docs/
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 lib/firebase_options.dart

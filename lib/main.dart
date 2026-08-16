@@ -40,7 +40,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   final LoginUtil _loginUtil = LoginUtil();
   bool _isLoading = false;
   String _message = '테스트용 로그인 버튼입니다.';
@@ -50,6 +50,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
     // 로그인/로그아웃/탈퇴에 따라 화면이 알아서 바뀌도록 인증 상태를 구독한다.
     _authSubscription = FirebaseAuth.instance.authStateChanges().listen((
       User? user,
@@ -59,12 +61,42 @@ class _MyHomePageState extends State<MyHomePage> {
         _user = user;
       });
     });
+
+    _refreshUser();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _authSubscription?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 다른 기기에서 연동이 바뀌었을 수 있으니 앱으로 돌아올 때마다 다시 확인한다.
+    if (state == AppLifecycleState.resumed) {
+      _refreshUser();
+    }
+  }
+
+  /// 서버에서 최신 계정 정보를 다시 받아온다.
+  ///
+  /// 파이어베이스는 로그인 정보를 기기에 저장해두고 앱을 켤 때 그걸 복원한다.
+  /// 즉 앱을 껐다 켜도 서버에 다시 물어보지 않는다.
+  /// 그래서 다른 기기에서 연동을 추가하거나 해제해도 이 기기는 모른다.
+  /// reload()를 불러야 비로소 최신 상태가 반영된다.
+  Future<void> _refreshUser() async {
+    try {
+      await FirebaseAuth.instance.currentUser?.reload();
+    } catch (_) {
+      // 계정이 이미 삭제된 경우 등. 아래에서 최신 상태로 덮어쓰므로 무시한다.
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _user = FirebaseAuth.instance.currentUser;
+    });
   }
 
   Future<void> _signInWithGoogle() => _signIn(_loginUtil.signInWithGoogle);
@@ -101,6 +133,37 @@ class _MyHomePageState extends State<MyHomePage> {
     if (!mounted) return;
     setState(() {
       _message = '로그아웃 했습니다.';
+    });
+  }
+
+  Future<void> _runAccountAction(
+    String label,
+    Future<void> Function() action,
+  ) async {
+    setState(() {
+      _isLoading = true;
+      _message = '$label 중...';
+    });
+
+    try {
+      await action();
+      if (!mounted) return;
+      setState(() {
+        // 계정 자체는 그대로라 authStateChanges가 울리지 않는다.
+        // 연결 목록을 갱신하려면 여기서 직접 다시 읽어와야 한다.
+        _user = FirebaseAuth.instance.currentUser;
+        _message = '$label 완료';
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _message = '$label 실패: $error';
+      });
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
     });
   }
 
@@ -176,7 +239,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 24),
-              if (isSignedIn) ..._buildSignedInButtons() else
+              if (isSignedIn)
+                ..._buildSignedInButtons()
+              else
                 ..._buildSignInButtons(),
             ],
           ),
@@ -220,9 +285,18 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   List<Widget> _buildSignedInButtons() {
+    final List<String> providerIds = _loginUtil.linkedProviderIds();
+
     return [
       Text(
         'uid: ${_user?.uid}',
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      const SizedBox(height: 4),
+      // 이 계정에 어떤 로그인 수단이 묶여 있는지 보여준다.
+      Text(
+        '연결된 로그인: ${providerIds.join(', ')}',
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.bodySmall,
       ),
@@ -235,6 +309,57 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       const SizedBox(height: 12),
+
+      // 아직 안 붙은 로그인 수단만 "연동 추가" 버튼으로 보여준다.
+      if (!providerIds.contains(GoogleAuthProvider.PROVIDER_ID)) ...[
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _isLoading
+                ? null
+                : () => _runAccountAction('구글 연동 추가', _loginUtil.linkGoogle),
+            icon: const Icon(Icons.link),
+            label: const Text('구글 연동 추가'),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+      if (!providerIds.contains(AppleAuthProvider.PROVIDER_ID)) ...[
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _isLoading
+                ? null
+                : () => _runAccountAction('애플 연동 추가', _loginUtil.linkApple),
+            icon: const Icon(Icons.link),
+            label: const Text('애플 연동 추가'),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+
+      // 연동 해제는 수단이 2개 이상일 때만 보여준다.
+      // 마지막 하나를 떼면 로그인할 방법이 없어지기 때문이다.
+      if (providerIds.length >= 2)
+        ...providerIds.map(
+          (String providerId) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _isLoading
+                    ? null
+                    : () => _runAccountAction(
+                          '$providerId 연동 해제',
+                          () => _loginUtil.unlinkProvider(providerId),
+                        ),
+                icon: const Icon(Icons.link_off),
+                label: Text('$providerId 연동 해제'),
+              ),
+            ),
+          ),
+        ),
+
       // 실제 앱에서는 보통 설정 화면 안에 넣는 기능이다.
       // 애플은 계정을 만들 수 있는 앱이면 지울 수도 있어야 한다고 요구한다.
       SizedBox(

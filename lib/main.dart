@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:authentication_app/firebase_options.dart';
-import 'package:authentication_app/utils/login_util.dart';
+import 'package:authentication_app/screens/home_screen.dart';
+import 'package:authentication_app/screens/login_screen.dart';
+import 'package:authentication_app/theme/app_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -23,27 +25,27 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Authentication App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(),
+      title: kAppName,
+      theme: AppTheme.light,
+      home: const AuthGate(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+/// 로그인 상태에 따라 보여줄 화면을 정하는 곳.
+///
+/// 각 화면이 직접 Navigator로 이동하지 않는다.
+/// 로그인/로그아웃/탈퇴가 어디서 일어나든 결국 로그인 상태만 바뀌고,
+/// 그걸 여기서 한 곳에서 지켜보다가 화면을 갈아끼운다.
+/// 그래야 "로그아웃했는데 화면이 안 바뀌는" 상황이 안 생긴다.
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<AuthGate> createState() => _AuthGateState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
-  final LoginUtil _loginUtil = LoginUtil();
-  bool _isLoading = false;
-  String _message = '테스트용 로그인 버튼입니다.';
+class _AuthGateState extends State<AuthGate> with WidgetsBindingObserver {
   User? _user;
   StreamSubscription<User?>? _authSubscription;
 
@@ -99,280 +101,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     });
   }
 
-  Future<void> _signInWithGoogle() => _signIn(_loginUtil.signInWithGoogle);
-
-  Future<void> _signInWithApple() => _signIn(_loginUtil.signInWithApple);
-
-  Future<void> _signIn(Future<UserCredential> Function() signInMethod) async {
-    setState(() {
-      _isLoading = true;
-      _message = '로그인 시도 중...';
-    });
-
-    try {
-      final result = await signInMethod();
-      if (!mounted) return;
-      setState(() {
-        _message = '로그인 성공: ${result.user?.uid}';
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _message = '로그인 실패: $error';
-      });
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _signOut() async {
-    await _loginUtil.signOut();
-    if (!mounted) return;
-    setState(() {
-      _message = '로그아웃 했습니다.';
-    });
-  }
-
-  Future<void> _runAccountAction(
-    String label,
-    Future<void> Function() action,
-  ) async {
-    setState(() {
-      _isLoading = true;
-      _message = '$label 중...';
-    });
-
-    try {
-      await action();
-      if (!mounted) return;
-      setState(() {
-        // 계정 자체는 그대로라 authStateChanges가 울리지 않는다.
-        // 연결 목록을 갱신하려면 여기서 직접 다시 읽어와야 한다.
-        _user = FirebaseAuth.instance.currentUser;
-        _message = '$label 완료';
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _message = '$label 실패: $error';
-      });
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _deleteAccount() async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('회원탈퇴'),
-          content: const Text(
-            '계정을 삭제합니다.\n'
-            '확인을 누르면 본인 확인을 위해 다시 로그인 창이 뜹니다.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('탈퇴하기'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true) return;
-
-    setState(() {
-      _isLoading = true;
-      _message = '회원탈퇴 처리 중...';
-    });
-
-    try {
-      await _loginUtil.deleteAccount();
-      if (!mounted) return;
-      setState(() {
-        _message = '회원탈퇴가 완료됐습니다.';
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _message = '회원탈퇴 실패: $error';
-      });
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final bool isSignedIn = _user != null;
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Login Test'),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _message,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 24),
-              if (isSignedIn)
-                ..._buildSignedInButtons()
-              else
-                ..._buildSignInButtons(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildSignInButtons() {
-    return [
-      SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: _isLoading ? null : _signInWithGoogle,
-          icon: _isLoading
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.login),
-          label: Text(_isLoading ? '로그인 중...' : '구글 로그인'),
-        ),
-      ),
-      const SizedBox(height: 12),
-      SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: _isLoading ? null : _signInWithApple,
-          icon: _isLoading
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.apple),
-          label: Text(_isLoading ? '로그인 중...' : '애플 로그인'),
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _buildSignedInButtons() {
-    final List<String> providerIds = _loginUtil.linkedProviderIds();
-
-    return [
-      Text(
-        'uid: ${_user?.uid}',
-        textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      const SizedBox(height: 4),
-      // 이 계정에 어떤 로그인 수단이 묶여 있는지 보여준다.
-      Text(
-        '연결된 로그인: ${providerIds.join(', ')}',
-        textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      const SizedBox(height: 24),
-      SizedBox(
-        width: double.infinity,
-        child: OutlinedButton(
-          onPressed: _isLoading ? null : _signOut,
-          child: const Text('로그아웃'),
-        ),
-      ),
-      const SizedBox(height: 12),
-
-      // 아직 안 붙은 로그인 수단만 "연동 추가" 버튼으로 보여준다.
-      if (!providerIds.contains(GoogleAuthProvider.PROVIDER_ID)) ...[
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _isLoading
-                ? null
-                : () => _runAccountAction('구글 연동 추가', _loginUtil.linkGoogle),
-            icon: const Icon(Icons.link),
-            label: const Text('구글 연동 추가'),
-          ),
-        ),
-        const SizedBox(height: 12),
-      ],
-      if (!providerIds.contains(AppleAuthProvider.PROVIDER_ID)) ...[
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _isLoading
-                ? null
-                : () => _runAccountAction('애플 연동 추가', _loginUtil.linkApple),
-            icon: const Icon(Icons.link),
-            label: const Text('애플 연동 추가'),
-          ),
-        ),
-        const SizedBox(height: 12),
-      ],
-
-      // 연동 해제는 수단이 2개 이상일 때만 보여준다.
-      // 마지막 하나를 떼면 로그인할 방법이 없어지기 때문이다.
-      if (providerIds.length >= 2)
-        ...providerIds.map(
-          (String providerId) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _isLoading
-                    ? null
-                    : () => _runAccountAction(
-                          '$providerId 연동 해제',
-                          () => _loginUtil.unlinkProvider(providerId),
-                        ),
-                icon: const Icon(Icons.link_off),
-                label: Text('$providerId 연동 해제'),
-              ),
-            ),
-          ),
-        ),
-
-      // 실제 앱에서는 보통 설정 화면 안에 넣는 기능이다.
-      // 애플은 계정을 만들 수 있는 앱이면 지울 수도 있어야 한다고 요구한다.
-      SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: _isLoading ? null : _deleteAccount,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.errorContainer,
-            foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
-          ),
-          child: Text(_isLoading ? '처리 중...' : '회원탈퇴'),
-        ),
-      ),
-    ];
+    return isSignedIn ? const HomeScreen() : const LoginScreen();
   }
 }

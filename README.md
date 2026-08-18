@@ -11,6 +11,13 @@ Flutter + Firebase 로그인 강의 실습 코드입니다.
 |---|---|
 | `feature/login-prepare` | 로그인 준비 + 구글 로그인까지 |
 | `feature/apple-login` | 애플 로그인 + 서버 간 알림(Cloud Functions)까지 |
+| `feature/account-link` | 계정 연동 + 연동 해제 + 회원탈퇴까지 |
+| `feature/ui-enhancement` | 위와 기능은 같고 화면만 다시 만든 버전 (보너스) |
+
+`feature/ui-enhancement`는 로그인 화면·홈·설정 화면을 새로 만든 브랜치입니다.
+로그인 로직(`lib/utils/login_util.dart`)은 `feature/account-link`와 완전히 같으니,
+디자인이 취향에 맞지 않으면 `feature/account-link`를 그대로 쓰셔도 됩니다.
+색과 앱 이름은 `lib/theme/app_theme.dart` 한 곳에서 바꿀 수 있습니다.
 
 ```bash
 git clone <저장소 주소>

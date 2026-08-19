@@ -28,8 +28,8 @@ class LoginUtil {
     //       'google-services.json 에서 client_id/oauth_client (type=3) 를 가져와서 넣어주면 됨',
     // );
 
-    final GoogleSignInAccount googleUser =
-        await GoogleSignIn.instance.authenticate();
+    final GoogleSignInAccount googleUser = await GoogleSignIn.instance
+        .authenticate();
 
     final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
@@ -73,8 +73,8 @@ class LoginUtil {
   Future<UserCredential> linkGoogle() async {
     final User? user = _requireCurrentUser();
 
-    final GoogleSignInAccount googleUser =
-        await GoogleSignIn.instance.authenticate();
+    final GoogleSignInAccount googleUser = await GoogleSignIn.instance
+        .authenticate();
 
     final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
@@ -234,8 +234,8 @@ class LoginUtil {
     // 안드로이드에서는 브라우저 저장소 문제로
     // "missing initial state" 에러가 나면서 실패한다.
     // 로그인할 때와 똑같이 네이티브 흐름으로 credential을 다시 받는다.
-    final GoogleSignInAccount googleUser =
-        await GoogleSignIn.instance.authenticate();
+    final GoogleSignInAccount googleUser = await GoogleSignIn.instance
+        .authenticate();
 
     final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 

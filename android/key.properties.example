@@ -1,0 +1,27 @@
+# 안드로이드 릴리즈 서명 설정 예시 파일.
+#
+# 이 파일을 같은 폴더에 key.properties 라는 이름으로 복사한 뒤,
+# 아래 네 값을 본인 키스토어에 맞게 채우면 됩니다.
+#
+#   cp android/key.properties.example android/key.properties
+#
+# 키스토어는 먼저 만들어야 합니다. (비밀번호는 여기 적을 값과 같아야 합니다)
+#
+#   keytool -genkey -v -keystore ~/upload-keystore.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# key.properties 와 .jks 파일은 android/.gitignore 에 들어 있어서
+# 저장소에 올라가지 않습니다. 절대 커밋하지 마세요.
+
+# 키스토어(.jks 파일) 비밀번호. keytool 이 처음 물어본 비밀번호입니다.
+storePassword=여기에_키스토어_비밀번호
+
+# 키(alias) 비밀번호. keytool 에서 따로 정하지 않았다면 위와 같습니다.
+keyPassword=여기에_키_비밀번호
+
+# keytool 의 -alias 에 적은 이름. 위 명령을 그대로 썼다면 upload 입니다.
+keyAlias=upload
+
+# 키스토어 파일의 전체 경로. ~ 는 인식되지 않으니 풀 경로로 적습니다.
+# 예) /Users/sora/upload-keystore.jks
+storeFile=/Users/본인계정/upload-keystore.jks

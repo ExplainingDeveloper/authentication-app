@@ -163,6 +163,89 @@ Google Cloud 콘솔 → Cloud Run 함수 → 함수 작성 → Node.js → 인�
 | `jwt audience invalid`                  | `functions/index.js` 의 `APPLE_AUDIENCE` 를 본인 번들 ID / 서비스 ID로 교체             |
 | 콘솔 배포 시 `require is not defined`   | `package.json` 에 `"type": "module"` 이 남아있음                                        |
 
+## 안드로이드 릴리즈 서명
+
+플레이스토어에 올리려면 본인 서명 키로 앱에 서명해야 합니다.
+[공식 문서](https://docs.flutter.dev/deployment/android)의 순서를 그대로 따릅니다.
+**세 단계를 순서대로** 해야 합니다.
+
+### 1. 서명 키 만들기
+
+```bash
+keytool -genkey -v -keystore ~/upload-keystore.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+비밀번호와 이름·소속을 물어봅니다. 비밀번호는 다음 단계에서 그대로 씁니다.
+
+### 2. android/key.properties 만들기
+
+`android/key.properties` 파일을 새로 만들고 이렇게 채웁니다.
+예시 파일이 있으니 복사해서 값만 바꿔도 됩니다.
+
+```bash
+cp android/key.properties.example android/key.properties
+```
+
+```properties
+storePassword=위에서 정한 비밀번호
+keyPassword=위에서 정한 비밀번호
+keyAlias=upload
+storeFile=/Users/본인계정/upload-keystore.jks
+```
+
+`storeFile` 은 전체 경로로 적어야 합니다. `~` 는 인식되지 않습니다.
+
+### 3. build.gradle.kts 에서 서명 설정 읽기
+
+이 저장소에는 이미 반영돼 있습니다. `android/app/build.gradle.kts` 를 열어보면
+`key.properties` 를 읽어서 `signingConfigs` 에 넣는 부분이 있습니다.
+
+이제 빌드하면 릴리즈 키로 서명됩니다.
+
+```bash
+flutter build appbundle
+```
+
+### 자주 만나는 에러
+
+1번·2번을 건너뛰고 3번만 하면 빌드가 이렇게 실패합니다.
+
+```
+* Where:
+Build file 'android/app/build.gradle.kts' line: 42
+
+* What went wrong:
+null cannot be cast to non-null type kotlin.String
+```
+
+`key.properties` 파일이 없어서 `keystoreProperties["keyAlias"]` 가 `null` 인데
+`as String` 으로 변환하려다 나는 에러입니다. **파일이 없거나, 있어도 항목 이름에
+오타가 있으면** 같은 에러가 납니다. 1번·2번을 먼저 하시면 해결됩니다.
+
+### 주의
+
+- **키스토어 파일을 잃어버리면 앱을 업데이트할 수 없습니다.** 처음 올린 키와 다른 키로 서명하면 스토어가 거부합니다. 파일과 비밀번호를 따로 백업해두세요.
+- `key.properties` 와 `.jks` 파일은 `android/.gitignore` 에 이미 들어 있어서 저장소에 올라가지 않습니다.
+
+### 어떤 키로 서명됐는지 확인하기
+
+```bash
+$ANDROID_HOME/build-tools/*/apksigner verify --print-certs \
+  build/app/outputs/flutter-apk/app-release.apk
+```
+
+`CN=Android Debug` 가 나오면 아직 디버그 키로 서명된 것입니다.
+
+## 계정 삭제 안내 페이지
+
+구글 플레이는 OAuth 로그인만 쓰는 앱에도 **계정 삭제 요청 URL** 을 요구합니다.
+[`support/index.html`](support/index.html) 이 그 용도의 고객센터 페이지입니다.
+호스팅한 뒤 플레이 콘솔의 데이터 삭제 URL 에 `.../support/#account-deletion` 을 제출하면 됩니다.
+
+페이지 안의 `[여기에 앱 이름 입력]`, `[여기에 개발자/회사명 입력]`,
+`[여기에 문의 이메일 입력]`, `[여기에 보관 기간, 예: 30일]` 네 군데는 본인 값으로 바꿔야 합니다.
+
 ## 본인 프로젝트에 맞게 바꿔야 하는 값
 
 [`functions/index.js`](functions/index.js) 의 `APPLE_AUDIENCE` 는 예제 값이라 반드시 교체해야 합니다.

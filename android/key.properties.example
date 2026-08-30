@@ -6,9 +6,16 @@
 #   cp android/key.properties.example android/key.properties
 #
 # 키스토어는 먼저 만들어야 합니다. (비밀번호는 여기 적을 값과 같아야 합니다)
+# 맥에서, 프로젝트의 android 폴더 안에 만드는 경우 (프로젝트 루트에서 실행):
 #
-#   keytool -genkey -v -keystore ~/upload-keystore.jks \
-#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#   keytool -genkey -v -keystore android/upload-keystore.jks \
+#     -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# keytool: command not found 가 나오면 안드로이드 스튜디오에 들어 있는 걸 씁니다.
+#
+#   "/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" -genkey -v \
+#     -keystore android/upload-keystore.jks \
+#     -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
 #
 # key.properties 와 .jks 파일은 android/.gitignore 에 들어 있어서
 # 저장소에 올라가지 않습니다. 절대 커밋하지 마세요.
@@ -22,6 +29,13 @@ keyPassword=여기에_키_비밀번호
 # keytool 의 -alias 에 적은 이름. 위 명령을 그대로 썼다면 upload 입니다.
 keyAlias=upload
 
-# 키스토어 파일의 전체 경로. ~ 는 인식되지 않으니 풀 경로로 적습니다.
-# 예) /Users/sora/upload-keystore.jks
-storeFile=/Users/본인계정/upload-keystore.jks
+# 키스토어 파일의 경로. ~ 는 인식되지 않습니다.
+# 프로젝트의 android 폴더 안에 뒀다면 전체 경로로 이렇게 적습니다.
+# 예) /Users/sora/Desktop/workspace/authentication_app/android/upload-keystore.jks
+#
+# 상대 경로도 됩니다. 기준은 이 파일이 있는 android 폴더가 아니라
+# build.gradle.kts 가 있는 android/app 폴더라서, 한 단계 올라가야 합니다.
+#   storeFile=../upload-keystore.jks
+#
+# 전체 경로는 컴퓨터마다 달라지니, 팀으로 작업한다면 상대 경로가 편합니다.
+storeFile=/Users/본인계정/프로젝트경로/android/upload-keystore.jks

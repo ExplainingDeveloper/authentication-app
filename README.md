@@ -171,12 +171,26 @@ Google Cloud 콘솔 → Cloud Run 함수 → 함수 작성 → Node.js → 인�
 
 ### 1. 서명 키 만들기
 
+홈 폴더에 두는 방법과, 프로젝트의 `android` 폴더 안에 두는 방법이 있습니다.
+아래는 **맥에서 프로젝트의 `android` 폴더 안에** 만드는 경우입니다. 프로젝트 루트에서 실행합니다.
+
 ```bash
-keytool -genkey -v -keystore ~/upload-keystore.jks \
-  -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+keytool -genkey -v -keystore android/upload-keystore.jks \
+  -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
 ```
 
 비밀번호와 이름·소속을 물어봅니다. 비밀번호는 다음 단계에서 그대로 씁니다.
+
+`keytool: command not found` 가 나오면 JDK 경로가 안 잡힌 것입니다.
+안드로이드 스튜디오에 들어 있는 keytool 을 전체 경로로 부르면 됩니다.
+
+```bash
+"/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" -genkey -v \
+  -keystore android/upload-keystore.jks \
+  -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+`flutter doctor -v` 의 `Java binary at:` 줄에서 본인 컴퓨터의 JDK 위치를 확인할 수 있습니다.
 
 ### 2. android/key.properties 만들기
 
@@ -191,10 +205,19 @@ cp android/key.properties.example android/key.properties
 storePassword=위에서 정한 비밀번호
 keyPassword=위에서 정한 비밀번호
 keyAlias=upload
-storeFile=/Users/본인계정/upload-keystore.jks
+storeFile=/Users/본인계정/프로젝트경로/android/upload-keystore.jks
 ```
 
-`storeFile` 은 전체 경로로 적어야 합니다. `~` 는 인식되지 않습니다.
+`~` 는 인식되지 않습니다. 전체 경로로 적거나, 상대 경로를 씁니다.
+상대 경로의 기준은 `key.properties` 가 있는 `android` 폴더가 아니라
+`build.gradle.kts` 가 있는 `android/app` 폴더입니다.
+그래서 키스토어를 `android` 폴더에 뒀다면 한 단계 올라가야 합니다.
+
+```properties
+storeFile=../upload-keystore.jks
+```
+
+전체 경로는 컴퓨터마다 달라지니, 팀으로 작업한다면 상대 경로가 편합니다.
 
 ### 3. build.gradle.kts 에서 서명 설정 읽기
 
@@ -227,6 +250,15 @@ null cannot be cast to non-null type kotlin.String
 
 - **키스토어 파일을 잃어버리면 앱을 업데이트할 수 없습니다.** 처음 올린 키와 다른 키로 서명하면 스토어가 거부합니다. 파일과 비밀번호를 따로 백업해두세요.
 - `key.properties` 와 `.jks` 파일은 `android/.gitignore` 에 이미 들어 있어서 저장소에 올라가지 않습니다.
+  키스토어를 홈 폴더가 아니라 프로젝트의 `android` 폴더 안에 뒀더라도 마찬가지입니다.
+  올라가지 않는지 직접 확인하려면 이렇게 합니다.
+
+  ```bash
+  git check-ignore -v android/upload-keystore.jks android/key.properties
+  ```
+
+  두 줄 다 `android/.gitignore` 의 몇 번째 줄에서 걸렀는지 출력되면 안전합니다.
+  아무것도 안 나오면 무시되지 않는다는 뜻이니 커밋하기 전에 확인하세요.
 
 ### 어떤 키로 서명됐는지 확인하기
 

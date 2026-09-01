@@ -172,22 +172,39 @@ Google Cloud 콘솔 → Cloud Run 함수 → 함수 작성 → Node.js → 인�
 ### 1. 서명 키 만들기
 
 홈 폴더에 두는 방법과, 프로젝트의 `android` 폴더 안에 두는 방법이 있습니다.
-아래는 **맥에서 프로젝트의 `android` 폴더 안에** 만드는 경우입니다. 프로젝트 루트에서 실행합니다.
+아래는 **프로젝트의 `android` 폴더 안에** 만드는 경우입니다. 프로젝트 루트에서 실행합니다.
+
+**맥 / 리눅스 (터미널)**
 
 ```bash
 keytool -genkey -v -keystore android/upload-keystore.jks \
   -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
 ```
 
+**윈도우 (PowerShell)**
+
+```powershell
+keytool -genkey -v -keystore android\upload-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
 비밀번호와 이름·소속을 물어봅니다. 비밀번호는 다음 단계에서 그대로 씁니다.
 
-`keytool: command not found` 가 나오면 JDK 경로가 안 잡힌 것입니다.
+`keytool: command not found`(윈도우에서는 `'keytool'은(는) ... 인식되지 않습니다`)
+가 나오면 JDK 경로가 안 잡힌 것입니다.
 안드로이드 스튜디오에 들어 있는 keytool 을 전체 경로로 부르면 됩니다.
+
+**맥**
 
 ```bash
 "/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" -genkey -v \
   -keystore android/upload-keystore.jks \
   -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+**윈도우 (PowerShell)** — 경로 앞의 `&` 는 따옴표로 감싼 명령을 실행하라는 뜻입니다.
+
+```powershell
+& "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe" -genkey -v -keystore android\upload-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
 ```
 
 `flutter doctor -v` 의 `Java binary at:` 줄에서 본인 컴퓨터의 JDK 위치를 확인할 수 있습니다.
@@ -197,8 +214,16 @@ keytool -genkey -v -keystore android/upload-keystore.jks \
 `android/key.properties` 파일을 새로 만들고 이렇게 채웁니다.
 예시 파일이 있으니 복사해서 값만 바꿔도 됩니다.
 
+맥 / 리눅스:
+
 ```bash
 cp android/key.properties.example android/key.properties
+```
+
+윈도우 (PowerShell):
+
+```powershell
+Copy-Item android\key.properties.example android\key.properties
 ```
 
 ```properties
@@ -218,6 +243,10 @@ storeFile=../upload-keystore.jks
 ```
 
 전체 경로는 컴퓨터마다 달라지니, 팀으로 작업한다면 상대 경로가 편합니다.
+
+윈도우에서 전체 경로를 적을 때는 `\` 가 이스케이프 문자로 처리되니
+`C:\\Users\\본인계정\\...` 처럼 두 번 쓰거나 `C:/Users/본인계정/...` 로 적습니다.
+상대 경로(`../upload-keystore.jks`)를 쓰면 이 문제가 없습니다.
 
 ### 3. build.gradle.kts 에서 서명 설정 읽기
 

@@ -1,3 +1,4 @@
+import 'package:authentication_app/services/user_repository.dart';
 import 'package:authentication_app/theme/app_theme.dart';
 import 'package:authentication_app/utils/auth_feedback.dart';
 import 'package:authentication_app/utils/login_util.dart';
@@ -19,6 +20,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final LoginUtil _loginUtil = LoginUtil();
+  final UserRepository _userRepository = UserRepository();
 
   /// 어떤 버튼을 눌러서 진행 중인지. 아무것도 안 하는 중이면 null.
   /// 로딩 표시를 누른 버튼에만 띄우려고 bool 대신 문자열로 들고 있다.
@@ -31,7 +33,13 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _pendingProvider = provider);
 
     try {
-      await signInMethod();
+      final UserCredential credential = await signInMethod();
+
+      // 로그인에 성공했으니 사용자 정보를 데이터베이스에 저장한다.
+      // 처음 온 사람이면 문서가 새로 생기고, 이미 있으면 갱신된다.
+      final User? user = credential.user;
+      if (user != null) await _saveUserQuietly(user);
+
       // 성공했을 때 setState를 부르지 않는다.
       // 곧 AuthGate가 이 화면 자체를 홈으로 갈아끼우기 때문이다.
     } catch (error) {
@@ -41,6 +49,21 @@ class _LoginScreenState extends State<LoginScreen> {
       if (message != null) showToast(context, message);
 
       setState(() => _pendingProvider = null);
+    }
+  }
+
+  /// 사용자 정보 저장이 실패해도 로그인은 성공한 것으로 둔다.
+  ///
+  /// 저장은 로그인이 끝난 뒤에 일어나는 뒷정리다.
+  /// 이걸 위의 try 안에 그냥 두면, 보안 규칙이나 네트워크 문제로 저장만
+  /// 실패했을 때 사용자에게 "로그인 실패"라고 잘못 알려주게 된다.
+  /// 실제로는 이미 로그인된 상태라 곧 홈 화면으로 넘어가기 때문에
+  /// 사용자 입장에서는 앞뒤가 맞지 않는다.
+  Future<void> _saveUserQuietly(User user) async {
+    try {
+      await _userRepository.saveUser(user);
+    } catch (_) {
+      // 다음 로그인 때 다시 저장을 시도하므로 여기서는 넘어간다.
     }
   }
 

@@ -1,3 +1,4 @@
+import 'package:authentication_app/services/user_repository.dart';
 import 'package:authentication_app/theme/app_theme.dart';
 import 'package:authentication_app/utils/auth_feedback.dart';
 import 'package:authentication_app/utils/login_util.dart';
@@ -27,6 +28,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final LoginUtil _loginUtil = LoginUtil();
+  final UserRepository _userRepository = UserRepository();
   bool _isLoading = false;
 
   /// 연동 추가와 연동 해제가 공통으로 거치는 부분.
@@ -114,14 +116,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     if (!confirmed) return;
 
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     setState(() => _isLoading = true);
 
     try {
+      // 계정보다 데이터베이스 문서를 먼저 지운다.
+      //
+      // 순서가 중요하다. 보안 규칙이 "로그인한 본인만 자기 문서를 건드릴 수
+      // 있다"로 되어 있어서, 계정을 먼저 지우면 로그인 상태가 사라지고
+      // 그 뒤로는 남은 문서를 지울 방법이 없어진다.
+      //
+      // TODO: [정식 출시용]
+      // 실제 서비스에서는 계정 삭제를 감지하는 Cloud Function을 두고
+      // 서버에서 지우는 쪽이 안전하다. 앱이 문서를 지운 직후 꺼져버리면
+      // 계정만 남고 데이터가 안 지워지는 일이 생길 수 있다.
+      await _userRepository.deleteUser(user.uid);
+
       await _loginUtil.deleteAccount();
       if (!mounted) return;
       Navigator.of(context).popUntil((Route<void> r) => r.isFirst);
       return;
     } catch (error) {
+      // 여기까지 왔다면 계정은 안 지워졌는데 문서만 지워졌을 수 있다.
+      // (애플 재인증 창을 닫았을 때가 대표적이다)
+      // 그대로 두면 멀쩡히 로그인된 사람의 프로필만 사라지므로 되돌려놓는다.
+      try {
+        await _userRepository.saveUser(user);
+      } catch (_) {
+        // 복구까지 실패해도 다음 로그인 때 다시 저장되므로 넘어간다.
+      }
+
       if (!mounted) return;
       final String? message = authErrorMessage(error);
       if (message != null) showToast(context, message);

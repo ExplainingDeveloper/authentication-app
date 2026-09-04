@@ -1,4 +1,5 @@
 import 'package:authentication_app/screens/settings_screen.dart';
+import 'package:authentication_app/services/user_repository.dart';
 import 'package:authentication_app/theme/app_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,22 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final UserRepository _userRepository = UserRepository();
+
+  /// 데이터베이스에 저장된 내 정보를 지켜보는 통로.
+  Stream<UserProfile?>? _profileStream;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 스트림은 여기서 딱 한 번만 만든다.
+    // build 안에서 만들면 화면을 다시 그릴 때마다 새 스트림이 생기고,
+    // 그때마다 데이터베이스에 다시 연결됐다 끊기기를 반복하게 된다.
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) _profileStream = _userRepository.watchUser(user.uid);
+  }
+
   Future<void> _openSettings() async {
     final Route<void> route = MaterialPageRoute<void>(
       builder: (_) => const SettingsScreen(),
@@ -49,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: ListView(
         children: <Widget>[
           const SizedBox(height: 32),
-          _ProfileSection(user: user),
+          _ProfileSection(user: user, profileStream: _profileStream),
           const SizedBox(height: 32),
           const Divider(),
           const SizedBox(height: 60),
@@ -62,37 +79,64 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 /// 프로필 사진, 이름, 이메일이 들어가는 윗부분.
+///
+/// 이름과 이메일은 데이터베이스(users 컬렉션)에 저장해둔 값을 보여준다.
+/// 로그인 정보에서 바로 꺼내 쓰지 않는 이유는, 데이터베이스에 있어야
+/// 나중에 사용자가 직접 고칠 수도 있고 다른 화면에서도 같이 쓸 수 있기 때문이다.
 class _ProfileSection extends StatelessWidget {
-  const _ProfileSection({required this.user});
+  const _ProfileSection({required this.user, required this.profileStream});
 
   final User? user;
+  final Stream<UserProfile?>? profileStream;
 
   @override
   Widget build(BuildContext context) {
-    final String name = _displayName(user);
+    // StreamBuilder는 스트림에 새 값이 올 때마다 아래 부분만 다시 그린다.
+    // 콘솔에서 이름을 바꾸면 앱을 껐다 켜지 않아도 화면이 바로 따라 바뀐다.
+    return StreamBuilder<UserProfile?>(
+      stream: profileStream,
+      builder: (BuildContext context, AsyncSnapshot<UserProfile?> snapshot) {
+        final UserProfile? profile = snapshot.data;
 
-    return Column(
-      children: <Widget>[
-        _Avatar(photoUrl: user?.photoURL, name: name),
-        const SizedBox(height: 16),
-        Text(
-          name,
-          style: const TextStyle(
-            color: AppColors.text,
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          // 애플 로그인에서 이메일 가리기를 선택하면 실제 주소 대신
-          // privaterelay 주소가 오거나 아예 안 올 수도 있다.
-          user?.email ?? '이메일 정보 없음',
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
-        ),
-        const SizedBox(height: 20),
-        const _EditProfileButton(),
-      ],
+        // 데이터베이스 값을 먼저 쓰고, 없으면 로그인 정보로 대신한다.
+        // 첫 로그인 직후에는 저장이 끝나기 전이라 문서가 잠깐 비어 있고,
+        // 그때 화면이 텅 비어 보이는 걸 막아준다.
+        final String? email = profile?.email ?? user?.email;
+        final String name = _displayName(
+          profile?.displayName ?? user?.displayName,
+          email,
+        );
+
+        return Column(
+          children: <Widget>[
+            // 프로필 사진은 데이터베이스에 저장하지 않는다.
+            // 사진 주소는 구글이 주는 값이고 우리가 바꿀 일이 없어서,
+            // 굳이 옮겨 적으면 원본이 바뀌었을 때 옛날 주소가 남는다.
+            _Avatar(photoUrl: user?.photoURL, name: name),
+            const SizedBox(height: 16),
+            Text(
+              name,
+              style: const TextStyle(
+                color: AppColors.text,
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              // 애플 로그인에서 이메일 가리기를 선택하면 실제 주소 대신
+              // privaterelay 주소가 오거나 아예 안 올 수도 있다.
+              email ?? '이메일 정보 없음',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const _EditProfileButton(),
+          ],
+        );
+      },
     );
   }
 
@@ -100,11 +144,9 @@ class _ProfileSection extends StatelessWidget {
   ///
   /// 이름이 없을 수 있다. 애플은 첫 로그인 때만 이름을 주고,
   /// 그때 사용자가 이름 공유를 끄면 아예 안 온다.
-  String _displayName(User? user) {
-    final String? name = user?.displayName;
+  String _displayName(String? name, String? email) {
     if (name != null && name.isNotEmpty) return name;
 
-    final String? email = user?.email;
     if (email != null && email.contains('@')) return email.split('@').first;
 
     return '사용자';

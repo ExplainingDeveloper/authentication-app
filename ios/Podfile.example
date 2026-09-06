@@ -1,0 +1,143 @@
+# ============================================================================
+# 참고용 파일입니다. 이 프로젝트는 이 파일을 쓰지 않습니다.
+# ============================================================================
+#
+# 이 프로젝트에는 Podfile이 없습니다. 지우거나 빠뜨린 게 아니라 원래 없습니다.
+#
+# 요즘 Flutter는 iOS 패키지를 CocoaPods 대신 SPM(Swift Package Manager)으로
+# 관리하는 게 기본이고, 이 프로젝트가 쓰는 파이어베이스 패키지들이 전부 SPM을
+# 지원하기 때문에 Flutter가 Podfile을 아예 만들지 않았습니다.
+#
+# 그런데 파이어베이스 공식 문서를 따라오다 보면 "Podfile을 열어서 이렇게
+# 고치세요"라는 안내가 나옵니다. 그때 열어볼 Podfile이 없으면 당황하실 수
+# 있어서, 문서가 말하는 게 어떤 파일인지 눈으로 보시라고 남겨둡니다.
+#
+# 파일 이름이 Podfile이 아니라 Podfile.example인 이유도 같습니다.
+# 이름을 Podfile로 바꿔두면 Flutter가 이걸 진짜 설정으로 읽어서
+# CocoaPods 방식으로 빌드하려고 합니다. 그러니 이름은 그대로 두세요.
+#
+# --- 언제 진짜 Podfile이 필요한가 ---
+#
+#   1. 예전 버전 Flutter를 쓰는 경우
+#   2. SPM을 꺼둔 경우 (flutter config --no-enable-swift-package-manager)
+#   3. SPM을 지원하지 않는 플러그인을 하나라도 쓰는 경우
+#
+# 셋 중 하나라도 해당하면 Flutter가 알아서 ios/Podfile을 만들어 줍니다.
+# 이 파일을 복사해서 쓰는 게 아닙니다.
+#
+# 내 프로젝트가 어느 쪽인지 확인:
+#
+#   flutter config --list
+#
+# enable-swift-package-manager 항목이 (Not set)으로 나와도 꺼진 게 아닙니다.
+# "기본값을 쓴다"는 뜻이고, 요즘 Flutter의 기본값은 켜짐입니다.
+#
+# ============================================================================
+
+
+# --- 여기서부터는 Flutter가 만들어주는 기본 내용입니다 ---
+#
+# 아래 flutter_ios_podfile_setup 까지는 손댈 일이 거의 없습니다.
+# Flutter 설치 경로를 찾아서 CocoaPods에 알려주는 준비 작업입니다.
+
+# 앱이 지원할 최소 iOS 버전.
+# SPM 프로젝트에는 이 줄이 없고, 대신 Xcode의 타겟 설정에서 정합니다.
+platform :ios, '15.0'
+
+# CocoaPods 사용 통계 전송을 끕니다. 빌드가 조금 빨라집니다.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
+
+# --- 공식 문서가 고치라고 하는 곳이 바로 이 target 블록입니다 ---
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  # ==========================================================================
+  # 아래 pod 'FirebaseFirestore' 세 줄이 공식 문서가 추가하라고 하는 부분입니다.
+  # 원문을 그대로 옮기면 이렇습니다.
+  #
+  #   [선택사항] 사전 컴파일된 프레임워크를 포함하여 iOS 및 macOS 빌드 시간을
+  #   개선합니다.
+  #
+  #   현재 iOS용 Firestore SDK는 Xcode에서 빌드하는 데 5분 이상 걸릴 수 있는
+  #   코드를 사용합니다. 빌드 시간을 크게 줄이려면 Podfile의 target 'Runner' do
+  #   블록에 다음 줄을 추가하여 사전 컴파일된 버전을 사용하면 됩니다.
+  #
+  #     pod 'FirebaseFirestore',
+  #       :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git',
+  #       :tag => 'IOS_SDK_VERSION'
+  #
+  #   IOS_SDK_VERSION을 firebase_core의 firebase_sdk_version.rb 파일에 지정된
+  #   Firebase iOS SDK 버전으로 바꿉니다. firebase_core의 최신 버전을 사용하지
+  #   않는 경우 로컬 Pub 패키지 캐시(일반적으로 ~/.pub-cache)에서 이 파일을
+  #   찾습니다.
+  #
+  #   또한 CocoaPods를 1.9.1 이상으로 업그레이드했는지 확인합니다.
+  #
+  #     gem install cocoapods
+  #
+  # --------------------------------------------------------------------------
+  # 왜 이런 안내가 있냐면, Firestore는 내부적으로 C++ 코드(gRPC, abseil,
+  # leveldb 같은 것들)를 쓰는데 CocoaPods로 붙이면 그걸 내 컴퓨터에서 전부
+  # 처음부터 컴파일하기 때문입니다. 그래서 5분 이상 걸립니다.
+  # invertase라는 곳에서 그걸 미리 빌드해둔 걸 대신 가져다 쓰는 겁니다.
+  #
+  # ★ SPM을 쓰고 있다면 이 작업은 할 필요가 없습니다.
+  #   구글 공식 SDK가 SPM 경로에서는 이미 사전 컴파일된 파일을 내려줍니다.
+  #   즉 이 안내가 해주려던 일을 파이어베이스가 알아서 해주고 있습니다.
+  #
+  # IOS_SDK_VERSION 자리에 넣을 버전 찾는 법:
+  #
+  #   cat ~/.pub-cache/hosted/pub.dev/firebase_core-*/ios/firebase_sdk_version.rb
+  #
+  # 지금 이 프로젝트 기준으로는 12.18.0 입니다.
+  # 주의: 이 버전은 firebase_core를 올릴 때마다 같이 바꿔줘야 합니다.
+  # 안 맞으면 빌드가 깨집니다. 손이 많이 가는 방식이라는 뜻이기도 합니다.
+  # ==========================================================================
+
+  pod 'FirebaseFirestore',
+    :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git',
+    :tag => '12.18.0'
+
+  # 이 줄이 pubspec.yaml에 적은 플러그인들을 실제로 가져오는 부분입니다.
+  # 위에 직접 적은 pod들 아래에 와야 합니다.
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+
+# 설치가 끝난 뒤 각 pod에 Flutter가 필요로 하는 빌드 설정을 붙여줍니다.
+# 이 부분도 Flutter가 만들어주는 그대로 두면 됩니다.
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+  end
+end

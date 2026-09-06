@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>고객센터 | [여기에 앱 이름 입력]</title>
+  <meta name="description" content="[여기에 앱 이름 입력] 고객센터입니다. 문의 방법과 계정 삭제 안내를 확인하실 수 있습니다." />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #f7f8fa;
+      --border: #e3e6ea;
+      --text: #1b1d20;
+      --text-muted: #5b6169;
+      --accent: #2b6cb0;
+      --warn-bg: #fff8e6;
+      --warn-border: #f0d79a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #16181b;
+        --surface: #1e2126;
+        --border: #303540;
+        --text: #eceef1;
+        --text-muted: #a7aeb8;
+        --accent: #7fb3e8;
+        --warn-bg: #2a2519;
+        --warn-border: #5a4c2b;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+        "Pretendard", "Noto Sans KR", "Malgun Gothic", sans-serif;
+      line-height: 1.75;
+      font-size: 16px;
+      word-break: keep-all;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px 96px; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 32px; }
+    h1 { font-size: 1.9rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 1.35rem;
+      margin: 48px 0 12px;
+      padding-top: 12px;
+      letter-spacing: -0.02em;
+      scroll-margin-top: 24px;
+    }
+    h3 { font-size: 1.05rem; margin: 28px 0 8px; }
+    p, li { color: var(--text); }
+    .lead { color: var(--text-muted); margin: 0; }
+    nav.toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+    nav.toc p { margin: 0 0 8px; font-weight: 600; }
+    nav.toc ul { margin: 0; padding-left: 20px; }
+    a { color: var(--accent); }
+    ul, ol { padding-left: 22px; }
+    li { margin: 6px 0; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin: 16px 0;
+    }
+    .notice {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin: 16px 0;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+    .path {
+      display: inline-block;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1px 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.92em;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.95rem; }
+    th, td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
+    th { background: var(--surface); font-weight: 600; }
+    .table-scroll { overflow-x: auto; }
+    footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>고객센터</h1>
+      <p class="lead">[여기에 앱 이름 입력] 이용 중 궁금한 점이나 불편한 점이 있으시면 언제든지 문의해 주세요.</p>
+    </header>
+
+    <nav class="toc" aria-label="목차">
+      <p>바로가기</p>
+      <ul>
+        <li><a href="#contact">문의하기</a></li>
+        <li><a href="#faq">자주 묻는 질문</a></li>
+        <li><a href="#account-deletion">계정 삭제 안내</a></li>
+      </ul>
+    </nav>
+
+    <h2 id="contact">문의하기</h2>
+    <p>
+      아래 이메일로 문의해 주시면 영업일 기준 3일 이내에 답변드리겠습니다.
+      문의 내용에 사용 중인 기기 정보(예: iPhone 15, Android 14)와 앱 버전을 함께 적어주시면
+      더 빠르게 도와드릴 수 있습니다.
+    </p>
+    <div class="card">
+      <p style="margin:0">
+        문의 이메일: <a href="mailto:[여기에 문의 이메일 입력]">[여기에 문의 이메일 입력]</a>
+      </p>
+    </div>
+
+    <h2 id="faq">자주 묻는 질문</h2>
+    <h3>로그인은 어떤 방법으로 할 수 있나요?</h3>
+    <p>
+      [여기에 앱 이름 입력]은 구글 로그인과 애플 로그인(OAuth)을 지원합니다.
+      별도의 아이디와 비밀번호를 만들지 않고, 이미 사용 중인 구글 계정 또는 애플 계정으로 바로 시작하실 수 있습니다.
+    </p>
+    <h3>구글 계정과 애플 계정을 함께 연결할 수 있나요?</h3>
+    <p>
+      네, 가능합니다. 앱 내 <span class="path">설정</span> 화면에서 로그인 수단을 추가로 연결하거나 연결을 해제할 수 있습니다.
+    </p>
+    <h3>계정을 삭제하고 싶어요.</h3>
+    <p>
+      아래 <a href="#account-deletion">계정 삭제 안내</a>에서 삭제 방법과 데이터 처리 정책을 자세히 확인하실 수 있습니다.
+    </p>
+
+    <h2 id="account-deletion">계정 삭제 안내</h2>
+    <p>
+      [여기에 앱 이름 입력](개발자: [여기에 개발자/회사명 입력])은 사용자가 원하실 때 언제든지
+      계정과 관련 데이터를 삭제하실 수 있도록 안내해 드리고 있습니다.
+      [여기에 앱 이름 입력]은 구글 로그인과 애플 로그인(OAuth)을 통해 회원가입 및 로그인을 제공하므로,
+      계정 삭제 역시 가입에 사용하신 구글 또는 애플 계정을 기준으로 처리됩니다.
+      아래 방법 중 편하신 방법을 선택해 주세요.
+    </p>
+
+    <h3>방법 1. 앱 내에서 직접 삭제하기</h3>
+    <p>
+      가장 빠른 방법입니다. 앱에 로그인하신 상태에서
+      <span class="path">앱 내 설정 &gt; 계정 삭제(회원탈퇴)</span> 경로로 이동하신 뒤 안내에 따라 진행해 주세요.
+      보안을 위해 삭제 직전에 구글 또는 애플 계정으로 다시 한 번 로그인(재인증)을 요청드릴 수 있습니다.
+      삭제가 완료되면 계정은 즉시 사라지며, 되돌릴 수 없습니다.
+    </p>
+
+    <h3>방법 2. 이메일로 삭제 요청하기</h3>
+    <p>
+      앱에 로그인할 수 없거나 직접 삭제가 어려우신 경우, 아래와 같이 이메일로 요청해 주시면
+      [여기에 개발자/회사명 입력]에서 확인 후 처리해 드립니다.
+    </p>
+    <div class="card">
+      <ul style="margin:0">
+        <li>받는 사람: <a href="mailto:[여기에 문의 이메일 입력]?subject=계정%20삭제%20요청">[여기에 문의 이메일 입력]</a></li>
+        <li>제목: <strong>계정 삭제 요청</strong></li>
+        <li>
+          본문: <strong>가입 시 사용하신 이메일 주소(구글 또는 애플 계정 이메일)</strong>를 반드시 함께 적어주세요.
+          본인 확인이 되지 않으면 요청을 처리해 드릴 수 없습니다.
+        </li>
+      </ul>
+    </div>
+    <div class="notice">
+      <p style="margin:0">
+        애플 로그인 사용 시 <strong>“나의 이메일 주소 가리기”</strong>를 선택하셨다면
+        <code>@privaterelay.appleid.com</code>으로 끝나는 비공개 이메일 주소가 발급됩니다.
+        이 경우 해당 비공개 주소를 적어주시거나, 그 주소로 메일을 보내주시면 본인 확인이 가능합니다.
+      </p>
+    </div>
+    <p>
+      이메일로 요청해 주신 경우, 접수 후 영업일 기준 3일 이내에 처리 결과를 회신해 드립니다.
+    </p>
+
+    <h3>삭제되는 데이터와 보관되는 데이터</h3>
+    <p>
+      계정 삭제 요청이 접수되면 이름, 이메일 주소, 프로필 사진 등 회원님을 식별할 수 있는 개인 데이터와
+      앱 이용 중 생성된 데이터는 <strong>즉시 삭제</strong>되며 복구할 수 없습니다.
+      다만 부정 이용 방지 및 관련 법령상의 의무를 이행하기 위해 일부 데이터는
+      <strong>[여기에 보관 기간, 예: 30일]</strong> 동안 분리 보관된 뒤 완전히 파기됩니다.
+    </p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>항목</th>
+            <th>처리 방식</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>즉시 삭제</td>
+            <td>이름, 이메일 주소, 프로필 사진, 로그인 계정 연동 정보, 앱 내 이용 데이터</td>
+            <td>계정 삭제 처리와 동시에 삭제되며 복구 불가</td>
+          </tr>
+          <tr>
+            <td>한시 보관 후 파기</td>
+            <td>부정 이용 방지 및 법령 준수를 위한 최소한의 기록(접속 로그, 처리 이력 등)</td>
+            <td>[여기에 보관 기간, 예: 30일] 동안 별도 분리 보관 후 자동 파기</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      계정을 삭제하시면 [여기에 앱 이름 입력]과 구글·애플 계정의 연동도 함께 해제됩니다.
+      다시 이용하고 싶으실 때는 언제든지 처음처럼 새로 가입하실 수 있으며,
+      이 경우 이전에 사용하시던 데이터는 복구되지 않는 점 양해 부탁드립니다.
+    </p>
+    <p>
+      계정 삭제 절차나 데이터 처리에 대해 더 궁금한 점이 있으시면
+      <a href="mailto:[여기에 문의 이메일 입력]">[여기에 문의 이메일 입력]</a>으로 편하게 문의해 주세요.
+    </p>
+
+    <footer>
+      <p>[여기에 앱 이름 입력] · 개발자: [여기에 개발자/회사명 입력]</p>
+      <p>문의: <a href="mailto:[여기에 문의 이메일 입력]">[여기에 문의 이메일 입력]</a></p>
+    </footer>
+  </div>
+</body>
+</html>

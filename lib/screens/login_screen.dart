@@ -35,8 +35,6 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final UserCredential credential = await signInMethod();
 
-      _debugPrintEmailSource(credential);
-
       // 로그인에 성공했으니 사용자 정보를 데이터베이스에 저장한다.
       // 처음 온 사람이면 문서가 새로 생기고, 이미 있으면 갱신된다.
       final User? user = credential.user;
@@ -52,35 +50,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       setState(() => _pendingProvider = null);
     }
-  }
-
-  /// 애플이 보낸 이메일과 파이어베이스가 들고 있는 이메일을 비교해서 찍는다.
-  ///
-  /// TODO: 원인 확인용 임시 코드. 확인 끝나면 이 함수와 호출부를 지운다.
-  ///
-  /// 애플 로그인에서 "나의 이메일 공유"를 골랐는데도 privaterelay 주소가
-  /// 보이는 이유를 가리기 위한 것이다. 볼 곳은 세 군데다.
-  ///
-  /// - isNewUser  : false면 예전에 만든 계정으로 로그인한 것이다.
-  /// - 애플이 보낸 것 : 이번 로그인에서 애플이 실제로 준 값.
-  /// - Firebase 값  : 계정에 저장돼 있는 값. 화면에 보이는 게 이것이다.
-  ///
-  /// 애플이 보낸 건 진짜 주소인데 Firebase 값만 relay라면,
-  /// 계정을 만들 때 기록된 옛날 값이 그대로 남아 있다는 뜻이다.
-  void _debugPrintEmailSource(UserCredential credential) {
-    final AdditionalUserInfo? info = credential.additionalUserInfo;
-    final User? user = credential.user;
-
-    debugPrint('===== 이메일 확인 =====');
-    debugPrint('isNewUser      : ${info?.isNewUser}');
-    debugPrint('애플이 보낸 것    : ${info?.profile}');
-    debugPrint('Firebase 값     : ${user?.email}');
-
-    // 제공업체별로 따로 들고 있는 이메일. 여기만 진짜 주소로 바뀌어 있을 수 있다.
-    for (final UserInfo provider in user?.providerData ?? <UserInfo>[]) {
-      debugPrint('  ${provider.providerId} → ${provider.email}');
-    }
-    debugPrint('=====================');
   }
 
   /// 사용자 정보 저장이 실패해도 로그인은 성공한 것으로 둔다.

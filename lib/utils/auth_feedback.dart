@@ -27,6 +27,20 @@ String? authErrorMessage(Object error) {
         return '네트워크 연결을 확인해주세요.';
       case 'requires-recent-login':
         return '보안을 위해 다시 로그인한 뒤 시도해주세요.';
+
+      // 여기부터는 2단계 인증에서 나오는 코드들.
+      case 'invalid-verification-code':
+        return '인증번호가 올바르지 않습니다. 다시 확인해주세요.';
+      case 'invalid-phone-number':
+        return '전화번호 형식이 올바르지 않습니다. (예: +821012345678)';
+      case 'too-many-requests':
+        return '시도가 너무 잦습니다. 잠시 후 다시 시도해주세요.';
+      case 'unverified-email':
+        return '이메일 인증이 끝난 계정에서만 2단계 인증을 켤 수 있습니다.';
+      case 'second-factor-already-in-use':
+        return '이미 등록된 번호입니다.';
+      case 'maximum-second-factor-count-exceeded':
+        return '더 이상 2단계 인증 수단을 추가할 수 없습니다.';
     }
 
     // LoginUtil에서 이미 사람이 읽을 문장으로 바꿔 던진 경우가 있다.

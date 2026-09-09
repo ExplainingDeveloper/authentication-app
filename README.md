@@ -8,39 +8,46 @@ Flutter + Firebase 소셜 로그인 강의 실습 코드입니다.
 
 ## 브랜치
 
-### 완성 코드
+강의 챕터별로 그 시점까지의 코드가 브랜치로 나뉘어 있습니다.
+따라오다 막히면 해당 챕터 브랜치를 받아서 본인 코드와 비교해보세요.
 
-| 브랜치 | 내용 |
-|---|---|
-| `main` | 전체 완성본 (클래스 A + B) |
-| `classA-final` | **클래스 A 완성본** — Firebase 준비 / 구글 로그인 / 애플 로그인 / 계정 연동 |
-| `classB-final` | 클래스 B 완성본 (준비 중) |
+| 챕터 | 브랜치 |
+| --- | --- |
+| 1. Firebase와 플러터 프로젝트 준비하기 | `feature/login-prepare` |
+| 2. 구글 로그인 제대로 이해하고 구현하기 | `feature/login-prepare` |
+| 3. 애플 로그인 구현하기 | `feature/apple-login` |
+| 4. 여러 로그인 방법 동시에 지원하기 | `feature/account-link` |
+| 4-5. (보너스) 앱 레이아웃 변경하기 | `feature/ui-enhancement` |
+| 5. 유저 데이터 안전하게 보호하기 | `feature/dbconnect` |
+| 6. 다중인증 (MFA) | `feature/mfa` |
+| 7. App Check | `feature/appcheck` |
+| 8. 마무리 | `main` (지금 이 브랜치) |
+
+각 브랜치에는 앞 챕터 내용이 모두 들어 있습니다.
+예를 들어 `feature/mfa`에는 구글·애플 로그인, 계정 연동, Firestore까지 다 들어 있고
+거기에 다중 인증이 더해진 상태입니다.
 
 ```bash
 git clone <저장소 주소>
-git checkout classA-final
+git checkout feature/apple-login
 flutter pub get
 ```
+
+### 완성 코드
+
+| 브랜치 | 내용 |
+| --- | --- |
+| `main` | 전체 완성본. 챕터 1~8이 모두 들어 있습니다. |
+| `classA-final` | 계정 연동까지의 완성본 (챕터 4 끝, `feature/ui-enhancement`와 같은 코드) |
 
 `classA-v1.0` 태그는 강의 영상과 똑같은 시점의 코드입니다.
 브랜치는 오탈자 수정 등으로 조금씩 움직일 수 있으니, 영상 그대로가 필요하면 태그를 쓰세요.
 
-```bash
-git checkout classA-v1.0
-```
+### 그 외
 
-### 챕터별 코드
-
-강의 진행 순서대로 나뉘어 있습니다. 중간부터 따라오고 싶을 때 쓰세요.
-
-| 브랜치 | 클래스 | 내용 |
-|---|---|---|
-| `feature/login-prepare` | A | 로그인 준비 + 구글 로그인까지 |
-| `feature/apple-login` | A | 애플 로그인 + 서버 간 알림(Cloud Functions)까지 |
-| `feature/account-link` | A | 계정 연동 + 연동 해제 + 회원탈퇴까지 |
-| `feature/ui-enhancement` | A | 위와 기능은 같고 화면만 다시 만든 버전 (보너스) — `classA-final`과 같은 코드 |
-| `release/google-play` | B | 플레이스토어 출시 준비 (서명 설정, 계정 삭제 안내 페이지) |
-| `feature/dbconnect` | B | Firestore 연동 (users 컬렉션) |
+| 브랜치 | 내용 |
+| --- | --- |
+| `release/google-play` | 플레이스토어 출시 준비 (서명 설정, 계정 삭제 안내 페이지) |
 
 `feature/ui-enhancement`는 로그인 화면·홈·설정 화면을 새로 만든 브랜치입니다.
 로그인 로직(`lib/utils/login_util.dart`)은 `feature/account-link`와 완전히 같으니,

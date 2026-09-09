@@ -5,19 +5,24 @@ Flutter + Firebase 로그인 강의 실습 코드입니다.
 
 ## 브랜치
 
-강의 진행 순서대로 브랜치가 나뉘어 있습니다. 필요한 시점의 코드를 받아서 쓰시면 됩니다.
+강의 챕터별로 그 시점까지의 코드가 브랜치로 나뉘어 있습니다.
+따라오다 막히면 해당 챕터 브랜치를 받아서 본인 코드와 비교해보세요.
 
-| 브랜치                   | 내용                                            |
-| ------------------------ | ----------------------------------------------- |
-| `feature/login-prepare`  | 로그인 준비 + 구글 로그인까지                   |
-| `feature/apple-login`    | 애플 로그인 + 서버 간 알림(Cloud Functions)까지 |
-| `feature/account-link`   | 계정 연동 + 연동 해제 + 회원탈퇴까지            |
-| `feature/ui-enhancement` | 위와 기능은 같고 화면만 다시 만든 버전 (보너스) |
+| 챕터 | 브랜치 |
+| --- | --- |
+| 1. Firebase와 플러터 프로젝트 준비하기 | `feature/login-prepare` |
+| 2. 구글 로그인 제대로 이해하고 구현하기 | `feature/login-prepare` |
+| 3. 애플 로그인 구현하기 | `feature/apple-login` |
+| 4. 여러 로그인 방법 동시에 지원하기 | `feature/account-link` |
+| 4-5. (보너스) 앱 레이아웃 변경하기 | `feature/ui-enhancement` |
+| 5. 유저 데이터 안전하게 보호하기 | `feature/dbconnect` |
+| 6. 다중인증 (MFA) | `feature/mfa` |
+| 7. App Check | `feature/appcheck` |
+| 8. 마무리 | `main` |
 
-`feature/ui-enhancement`는 로그인 화면·홈·설정 화면을 새로 만든 브랜치입니다.
-로그인 로직(`lib/utils/login_util.dart`)은 `feature/account-link`와 완전히 같으니,
-디자인이 취향에 맞지 않으면 `feature/account-link`를 그대로 쓰셔도 됩니다.
-색과 앱 이름을 바꾸는 방법은 아래 [앱 이름과 색 바꾸기](#앱-이름과-색-바꾸기)에 정리해뒀습니다.
+각 브랜치에는 앞 챕터 내용이 모두 들어 있습니다.
+예를 들어 `feature/mfa`에는 구글·애플 로그인, 계정 연동, Firestore까지 다 들어 있고
+거기에 다중 인증이 더해진 상태입니다.
 
 ```bash
 git clone <저장소 주소>
@@ -25,8 +30,30 @@ git checkout feature/apple-login
 flutter pub get
 ```
 
+### 완성 코드
+
+| 브랜치 | 내용 |
+| --- | --- |
+| `main` | 전체 완성본. 챕터 1~8이 모두 들어 있습니다. |
+| `classA-final` | 계정 연동까지의 완성본 (챕터 4 끝, `feature/ui-enhancement`와 같은 코드) |
+
+`classA-v1.0` 태그는 강의 영상과 똑같은 시점의 코드입니다.
+브랜치는 오탈자 수정 등으로 조금씩 움직일 수 있으니, 영상 그대로가 필요하면 태그를 쓰세요.
+
+### 그 외
+
+| 브랜치 | 내용 |
+| --- | --- |
+| `release/google-play` | 플레이스토어 출시 준비 (서명 설정, 계정 삭제 안내 페이지) |
+
+`feature/ui-enhancement`는 로그인 화면·홈·설정 화면을 새로 만든 브랜치입니다.
+로그인 로직(`lib/utils/login_util.dart`)은 `feature/account-link`와 완전히 같으니,
+디자인이 취향에 맞지 않으면 `feature/account-link`를 그대로 쓰셔도 됩니다.
+색과 앱 이름을 바꾸는 방법은 아래 [앱 이름과 색 바꾸기](#앱-이름과-색-바꾸기)에 정리해뒀습니다.
+
 Firebase 설정 파일(`google-services.json`, `GoogleService-Info.plist`, `firebase_options.dart`)은
-본인 프로젝트 것으로 교체해야 합니다.
+각자 계정 정보라서 저장소에 없습니다. 같은 위치의 `.example` 파일을 참고해
+본인 프로젝트 것으로 만들어야 합니다.
 
 ## 앱 이름과 색 바꾸기
 

@@ -14,16 +14,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // App Check를 켠다.
-  //
-  // 여기서부터 우리 앱이 파이어베이스로 보내는 요청에 "나 진짜 정식 앱이야"
-  // 라는 증명서가 붙는다. 증명서 없는 요청, 즉 API 키만 빼내서 만든 가짜 앱이나
-  // 봇의 요청은 콘솔에서 적용(Enforcement)을 켜는 순간 막힌다.
-  //
-  // 부르는 위치가 중요하다. Firebase.initializeApp 뒤, 그리고 다른 파이어베이스
-  // 기능을 쓰기 전이어야 한다. 인증이나 파이어스토어를 먼저 건드리면
-  // 그 요청에는 증명서가 안 붙는다.
+ 
   await FirebaseAppCheck.instance.activate(
     // 개발 중에는 debug, 출시 빌드에서는 진짜 검증 방식을 쓴다.
     //
@@ -31,8 +22,18 @@ Future<void> main() async {
     // "정식 앱"으로 인정해주지 않는다. 그래서 개발 중에 진짜 방식을 쓰면
     // 내 앱이 내 요청을 못 보내는 상황이 된다.
     //
-    // debug를 쓰면 실행할 때 콘솔에 디버그 토큰이 찍힌다.
-    // 그 값을 파이어베이스 콘솔의 App Check에 등록해야 개발 중에도 통과된다.
+    // debug를 쓰면 실행할 때 로그에 디버그 토큰이 찍힌다.
+    // 그 값을 파이어베이스 콘솔의
+    // App Check -> 앱 -> 점 세 개 -> 디버그 토큰 관리 에 등록해야
+    // 개발 중에도 요청이 통과된다.
+    //
+    // iOS는 그냥은 안 찍힌다. Xcode에서 Runner 스킴을 열어
+    // Run -> Arguments -> Arguments Passed On Launch 에
+    // -FIRDebugEnabled 를 넣고 Xcode에서 한 번 실행하면 찍힌다.
+    // 한 번 발급되면 그 설치본에 저장되므로, 그 뒤로는 flutter run 으로 돌려도 된다.
+    // (https://firebase.google.com/docs/app-check/ios/debug-provider?hl=ko)
+    //
+    // 토큰은 기기마다 다르고, 앱을 지웠다 깔면 새로 발급된다.
     //
     // 공식 문서에는 androidProvider / appleProvider 로 나와 있는데,
     // 지금 버전에서는 이 이름이 deprecated 되고 providerAndroid /

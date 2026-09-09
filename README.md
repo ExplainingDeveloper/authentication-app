@@ -54,6 +54,19 @@ flutter pub get
 디자인이 취향에 맞지 않으면 `feature/account-link`를 그대로 쓰셔도 됩니다.
 색과 앱 이름을 바꾸는 방법은 아래 [앱 이름과 색 바꾸기](#앱-이름과-색-바꾸기)에 정리해뒀습니다.
 
+## 아키텍처
+
+강의에서 쓴 그림입니다. 코드를 따라가기 전에 전체 모양을 보고 싶을 때 참고하세요.
+
+| 그림 | 내용 |
+| --- | --- |
+| [구글 로그인](lib/architecture/1_google_login.png) | 네이티브 SDK로 idToken을 받아 Firebase에 넘기는 흐름. 앱 안에서 끝난다. |
+| [애플 로그인](lib/architecture/2_apple_login.png) | Firebase의 OAuth 핸들러를 거쳐 애플과 이야기하는 흐름. 구글과 갈리는 지점. |
+| [전체 구조](lib/architecture/3_overall_architecture.png) | 화면 · 로직 · Firebase Auth · 제공업체 계층과 계정 연동 |
+| [보안 관문](lib/architecture/4_security_layers.png) | 요청 하나가 데이터에 닿기까지 지나는 세 개의 문 |
+
+앞의 세 장은 로그인까지(챕터 1~4), 마지막 한 장은 그 뒤에 쌓은 보안(챕터 5~7)을 다룹니다.
+
 ## Firebase 설정 파일
 
 Firebase 설정 파일은 각자 계정 정보라서 저장소에 올라가 있지 않습니다.

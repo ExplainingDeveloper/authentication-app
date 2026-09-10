@@ -21,7 +21,7 @@ Flutter + Firebase 소셜 로그인 강의 실습 코드입니다.
 | 5. 유저 데이터 안전하게 보호하기 | `feature/dbconnect` |
 | 6. 다중인증 (MFA) | `feature/mfa` |
 | 7. App Check | `feature/appcheck` |
-| 8. 마무리 | `final` |
+| 8. 마무리 | `classA-final` |
 
 각 브랜치에는 앞 챕터 내용이 모두 들어 있습니다.
 예를 들어 `feature/mfa`에는 구글·애플 로그인, 계정 연동, Firestore까지 다 들어 있고
@@ -35,16 +35,17 @@ flutter pub get
 
 ### 완성 코드
 
-강의에서 만든 코드 전부를 보고 싶으면 **`final`** 브랜치를 받으세요.
+강의에서 만든 코드 전부를 보고 싶으면 **`classA-final`** 브랜치를 받으세요.
 
 ```bash
-git checkout final
+git checkout classA-final
 ```
 
 | 브랜치 | 내용 |
 | --- | --- |
-| `final` | 전체 완성본. 챕터 1~8이 모두 들어 있습니다. |
-| `main` | `final`과 같은 코드입니다. 저장소를 열면 처음 보이는 브랜치예요. |
+| `classA-final` | **이 강의의 완성본.** 로그인부터 App Check까지 다 들어 있습니다. |
+| `classB-final` | 출시 강의까지 포함한 버전 (스토어 서명 설정, 계정 삭제 안내 페이지) |
+| `main` | `classB-final`과 같은 코드입니다. 저장소를 열면 처음 보이는 브랜치예요. |
 
 로그인까지만 있는 상태가 필요하면 `feature/ui-enhancement` 를 받으시면 됩니다.
 
@@ -223,150 +224,6 @@ Google Cloud 콘솔 → Cloud Run 함수 → 함수 작성 → Node.js → 인�
 | `Valid choices are: {"node": ...20}`    | Firebase CLI가 오래됨 → 업데이트 필요                                                   |
 | `jwt audience invalid`                  | `functions/index.js` 의 `APPLE_AUDIENCE` 를 본인 번들 ID / 서비스 ID로 교체             |
 | 콘솔 배포 시 `require is not defined`   | `package.json` 에 `"type": "module"` 이 남아있음                                        |
-
-## 안드로이드 릴리즈 서명
-
-플레이스토어에 올리려면 본인 서명 키로 앱에 서명해야 합니다.
-[공식 문서](https://docs.flutter.dev/deployment/android)의 순서를 그대로 따릅니다.
-**세 단계를 순서대로** 해야 합니다.
-
-### 1. 서명 키 만들기
-
-홈 폴더에 두는 방법과, 프로젝트의 `android` 폴더 안에 두는 방법이 있습니다.
-아래는 **프로젝트의 `android` 폴더 안에** 만드는 경우입니다. 프로젝트 루트에서 실행합니다.
-
-**맥 / 리눅스 (터미널)**
-
-```bash
-keytool -genkey -v -keystore android/upload-keystore.jks \
-  -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
-```
-
-**윈도우 (PowerShell)**
-
-```powershell
-keytool -genkey -v -keystore android\upload-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
-```
-
-비밀번호와 이름·소속을 물어봅니다. 비밀번호는 다음 단계에서 그대로 씁니다.
-
-`keytool: command not found`(윈도우에서는 `'keytool'은(는) ... 인식되지 않습니다`)
-가 나오면 JDK 경로가 안 잡힌 것입니다.
-안드로이드 스튜디오에 들어 있는 keytool 을 전체 경로로 부르면 됩니다.
-
-**맥**
-
-```bash
-"/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" -genkey -v \
-  -keystore android/upload-keystore.jks \
-  -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
-```
-
-**윈도우 (PowerShell)** — 경로 앞의 `&` 는 따옴표로 감싼 명령을 실행하라는 뜻입니다.
-
-```powershell
-& "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe" -genkey -v -keystore android\upload-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
-```
-
-`flutter doctor -v` 의 `Java binary at:` 줄에서 본인 컴퓨터의 JDK 위치를 확인할 수 있습니다.
-
-### 2. android/key.properties 만들기
-
-`android/key.properties` 파일을 새로 만들고 이렇게 채웁니다.
-예시 파일이 있으니 복사해서 값만 바꿔도 됩니다.
-
-맥 / 리눅스:
-
-```bash
-cp android/key.properties.example android/key.properties
-```
-
-윈도우 (PowerShell):
-
-```powershell
-Copy-Item android\key.properties.example android\key.properties
-```
-
-```properties
-storePassword=위에서 정한 비밀번호
-keyPassword=위에서 정한 비밀번호
-keyAlias=upload
-storeFile=/Users/본인계정/프로젝트경로/android/upload-keystore.jks
-```
-
-`~` 는 인식되지 않습니다. 전체 경로로 적거나, 상대 경로를 씁니다.
-상대 경로의 기준은 `key.properties` 가 있는 `android` 폴더가 아니라
-`build.gradle.kts` 가 있는 `android/app` 폴더입니다.
-그래서 키스토어를 `android` 폴더에 뒀다면 한 단계 올라가야 합니다.
-
-```properties
-storeFile=../upload-keystore.jks
-```
-
-전체 경로는 컴퓨터마다 달라지니, 팀으로 작업한다면 상대 경로가 편합니다.
-
-윈도우에서 전체 경로를 적을 때는 `\` 가 이스케이프 문자로 처리되니
-`C:\\Users\\본인계정\\...` 처럼 두 번 쓰거나 `C:/Users/본인계정/...` 로 적습니다.
-상대 경로(`../upload-keystore.jks`)를 쓰면 이 문제가 없습니다.
-
-### 3. build.gradle.kts 에서 서명 설정 읽기
-
-이 저장소에는 이미 반영돼 있습니다. `android/app/build.gradle.kts` 를 열어보면
-`key.properties` 를 읽어서 `signingConfigs` 에 넣는 부분이 있습니다.
-
-이제 빌드하면 릴리즈 키로 서명됩니다.
-
-```bash
-flutter build appbundle
-```
-
-### 자주 만나는 에러
-
-1번·2번을 건너뛰고 3번만 하면 빌드가 이렇게 실패합니다.
-
-```
-* Where:
-Build file 'android/app/build.gradle.kts' line: 42
-
-* What went wrong:
-null cannot be cast to non-null type kotlin.String
-```
-
-`key.properties` 파일이 없어서 `keystoreProperties["keyAlias"]` 가 `null` 인데
-`as String` 으로 변환하려다 나는 에러입니다. **파일이 없거나, 있어도 항목 이름에
-오타가 있으면** 같은 에러가 납니다. 1번·2번을 먼저 하시면 해결됩니다.
-
-### 주의
-
-- **키스토어 파일을 잃어버리면 앱을 업데이트할 수 없습니다.** 처음 올린 키와 다른 키로 서명하면 스토어가 거부합니다. 파일과 비밀번호를 따로 백업해두세요.
-- `key.properties` 와 `.jks` 파일은 `android/.gitignore` 에 이미 들어 있어서 저장소에 올라가지 않습니다.
-  키스토어를 홈 폴더가 아니라 프로젝트의 `android` 폴더 안에 뒀더라도 마찬가지입니다.
-  올라가지 않는지 직접 확인하려면 이렇게 합니다.
-
-  ```bash
-  git check-ignore -v android/upload-keystore.jks android/key.properties
-  ```
-
-  두 줄 다 `android/.gitignore` 의 몇 번째 줄에서 걸렀는지 출력되면 안전합니다.
-  아무것도 안 나오면 무시되지 않는다는 뜻이니 커밋하기 전에 확인하세요.
-
-### 어떤 키로 서명됐는지 확인하기
-
-```bash
-$ANDROID_HOME/build-tools/*/apksigner verify --print-certs \
-  build/app/outputs/flutter-apk/app-release.apk
-```
-
-`CN=Android Debug` 가 나오면 아직 디버그 키로 서명된 것입니다.
-
-## 계정 삭제 안내 페이지
-
-구글 플레이는 OAuth 로그인만 쓰는 앱에도 **계정 삭제 요청 URL** 을 요구합니다.
-[`support/index.html`](support/index.html) 이 그 용도의 고객센터 페이지입니다.
-호스팅한 뒤 플레이 콘솔의 데이터 삭제 URL 에 `.../support/#account-deletion` 을 제출하면 됩니다.
-
-페이지 안의 `[여기에 앱 이름 입력]`, `[여기에 개발자/회사명 입력]`,
-`[여기에 문의 이메일 입력]`, `[여기에 보관 기간, 예: 30일]` 네 군데는 본인 값으로 바꿔야 합니다.
 
 ## 본인 프로젝트에 맞게 바꿔야 하는 값
 

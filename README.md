@@ -21,7 +21,7 @@ Flutter + Firebase 소셜 로그인 강의 실습 코드입니다.
 | 5. 유저 데이터 안전하게 보호하기 | `feature/dbconnect` |
 | 6. 다중인증 (MFA) | `feature/mfa` |
 | 7. App Check | `feature/appcheck` |
-| 8. 마무리 | `final` |
+| 8. 마무리 | `classA-final` |
 
 각 브랜치에는 앞 챕터 내용이 모두 들어 있습니다.
 예를 들어 `feature/mfa`에는 구글·애플 로그인, 계정 연동, Firestore까지 다 들어 있고
@@ -35,16 +35,17 @@ flutter pub get
 
 ### 완성 코드
 
-강의에서 만든 코드 전부를 보고 싶으면 **`final`** 브랜치를 받으세요.
+강의에서 만든 코드 전부를 보고 싶으면 **`classA-final`** 브랜치를 받으세요.
 
 ```bash
-git checkout final
+git checkout classA-final
 ```
 
 | 브랜치 | 내용 |
 | --- | --- |
-| `final` | 전체 완성본. 챕터 1~8이 모두 들어 있습니다. |
-| `main` | `final`과 같은 코드입니다. 저장소를 열면 처음 보이는 브랜치예요. |
+| `classA-final` | **이 강의의 완성본.** 로그인부터 App Check까지 다 들어 있습니다. |
+| `classB-final` | 출시 강의까지 포함한 버전 (스토어 서명 설정, 계정 삭제 안내 페이지) |
+| `main` | `classB-final`과 같은 코드입니다. 저장소를 열면 처음 보이는 브랜치예요. |
 
 로그인까지만 있는 상태가 필요하면 `feature/ui-enhancement` 를 받으시면 됩니다.
 

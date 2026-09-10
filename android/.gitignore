@@ -12,8 +12,3 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
-
-# 키스토어를 홈 폴더(~)가 아니라 이 android 폴더 안에 두는 경우.
-# 위의 **/*.jks 로도 이미 걸러지지만, 파일 이름을 눈에 보이게 적어둔다.
-/upload-keystore.jks
-/key.properties

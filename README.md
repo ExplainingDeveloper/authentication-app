@@ -45,7 +45,7 @@ git checkout classA-final
 | --- | --- |
 | `classA-final` | **이 강의의 완성본.** 로그인부터 App Check까지 다 들어 있습니다. |
 | `classB-final` | 출시 강의까지 포함한 버전 (스토어 서명 설정, 계정 삭제 안내 페이지) |
-| `main` | `classB-final`과 같은 코드입니다. 저장소를 열면 처음 보이는 브랜치예요. |
+| `main` | `classA-final`과 같은 코드입니다. 저장소를 열면 처음 보이는 브랜치예요. |
 
 로그인까지만 있는 상태가 필요하면 `feature/ui-enhancement` 를 받으시면 됩니다.
 

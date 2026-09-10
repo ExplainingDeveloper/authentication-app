@@ -2,8 +2,10 @@ import 'package:authentication_app/services/user_repository.dart';
 import 'package:authentication_app/theme/app_theme.dart';
 import 'package:authentication_app/utils/auth_feedback.dart';
 import 'package:authentication_app/utils/login_util.dart';
+import 'package:authentication_app/utils/mfa_util.dart';
 import 'package:authentication_app/widgets/auth_button.dart';
 import 'package:authentication_app/widgets/google_logo.dart';
+import 'package:authentication_app/widgets/text_input_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -21,6 +23,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final LoginUtil _loginUtil = LoginUtil();
   final UserRepository _userRepository = UserRepository();
+  final MfaUtil _mfaUtil = MfaUtil();
 
   /// 어떤 버튼을 눌러서 진행 중인지. 아무것도 안 하는 중이면 null.
   /// 로딩 표시를 누른 버튼에만 띄우려고 bool 대신 문자열로 들고 있다.
@@ -42,6 +45,48 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // 성공했을 때 setState를 부르지 않는다.
       // 곧 AuthGate가 이 화면 자체를 홈으로 갈아끼우기 때문이다.
+    } on FirebaseAuthMultiFactorException catch (exception) {
+      // 실패가 아니다. 1단계는 통과했고 2단계가 남았다는 신호다.
+      await _resolveSecondFactor(exception);
+    } catch (error) {
+      if (!mounted) return;
+
+      final String? message = authErrorMessage(error);
+      if (message != null) showToast(context, message);
+
+      setState(() => _pendingProvider = null);
+    }
+  }
+
+  /// 2단계 인증이 켜진 계정의 로그인을 마저 끝낸다.
+  ///
+  /// 등록해둔 번호로 문자가 가고, 그 번호를 넣어야 비로소 로그인이 된다.
+  /// 여기까지 오면 구글이나 애플 인증은 이미 통과한 상태다.
+  Future<void> _resolveSecondFactor(
+    FirebaseAuthMultiFactorException exception,
+  ) async {
+    try {
+      final bool signedIn = await _mfaUtil.resolveSignIn(exception, () async {
+        if (!mounted) return null;
+        return showTextInputDialog(
+          context: context,
+          title: '2단계 인증',
+          message: '등록하신 번호로 인증번호를 보냈습니다.',
+          hint: '123456',
+          actionLabel: '확인',
+          keyboardType: TextInputType.number,
+        );
+      });
+
+      // 사용자가 인증번호 창을 닫았다면 로그인 화면에 그대로 남는다.
+      if (!signedIn) {
+        if (!mounted) return;
+        setState(() => _pendingProvider = null);
+        return;
+      }
+
+      final User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) await _saveUserQuietly(user);
     } catch (error) {
       if (!mounted) return;
 

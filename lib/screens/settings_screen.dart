@@ -2,7 +2,9 @@ import 'package:authentication_app/services/user_repository.dart';
 import 'package:authentication_app/theme/app_theme.dart';
 import 'package:authentication_app/utils/auth_feedback.dart';
 import 'package:authentication_app/utils/login_util.dart';
+import 'package:authentication_app/utils/mfa_util.dart';
 import 'package:authentication_app/widgets/google_logo.dart';
+import 'package:authentication_app/widgets/text_input_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -29,7 +31,23 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final LoginUtil _loginUtil = LoginUtil();
   final UserRepository _userRepository = UserRepository();
+  final MfaUtil _mfaUtil = MfaUtil();
   bool _isLoading = false;
+
+  /// 지금 계정에 등록된 2단계 인증 수단. 비어 있으면 아직 안 켠 상태다.
+  List<MultiFactorInfo> _factors = <MultiFactorInfo>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFactors();
+  }
+
+  Future<void> _loadFactors() async {
+    final List<MultiFactorInfo> factors = await _mfaUtil.enrolledFactors();
+    if (!mounted) return;
+    setState(() => _factors = factors);
+  }
 
   /// 연동 추가와 연동 해제가 공통으로 거치는 부분.
   ///
@@ -108,8 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _deleteAccount() async {
     final bool confirmed = await _confirm(
       title: '회원탈퇴',
-      message:
-          '계정과 관련된 정보가 모두 삭제되며 되돌릴 수 없습니다.\n'
+      message: '계정과 관련된 정보가 모두 삭제되며 되돌릴 수 없습니다.\n'
           '본인 확인을 위해 로그인 창이 한 번 더 뜹니다.',
       actionLabel: '탈퇴하기',
       isDanger: true,
@@ -153,6 +170,70 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (message != null) showToast(context, message);
       setState(() => _isLoading = false);
     }
+  }
+
+  /// 휴대폰 번호를 2단계 인증 수단으로 등록한다.
+  ///
+  /// 창이 두 번 뜬다. 먼저 번호를 받고, 문자가 도착하면 인증번호를 받는다.
+  /// 두 번째 창은 MfaUtil이 필요할 때 불러서 띄운다.
+  Future<void> _addPhoneFactor() async {
+    final String? phoneNumber = await showTextInputDialog(
+      context: context,
+      title: '2단계 인증 켜기',
+      message: '문자를 받을 번호를 국가번호까지 넣어주세요.',
+      hint: '+821012345678',
+      actionLabel: '인증번호 받기',
+      keyboardType: TextInputType.phone,
+    );
+    if (phoneNumber == null || phoneNumber.trim().isEmpty) return;
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final bool enrolled = await _mfaUtil.enrollPhone(
+        phoneNumber: phoneNumber.trim(),
+        displayName: '휴대폰',
+        askSmsCode: () async {
+          if (!mounted) return null;
+          return showTextInputDialog(
+            context: context,
+            title: '인증번호 입력',
+            message: '문자로 받은 6자리 숫자를 넣어주세요.',
+            hint: '123456',
+            actionLabel: '확인',
+            keyboardType: TextInputType.number,
+          );
+        },
+      );
+
+      await _loadFactors();
+      if (!mounted) return;
+
+      // 사용자가 인증번호 창을 닫았을 때는 아무 말도 하지 않는다.
+      if (enrolled) showToast(context, '2단계 인증을 켰습니다.');
+    } catch (error) {
+      if (!mounted) return;
+      final String? message = authErrorMessage(error);
+      if (message != null) showToast(context, message);
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+  }
+
+  Future<void> _removeFactor(MultiFactorInfo info) async {
+    final bool confirmed = await _confirm(
+      title: '2단계 인증 해제',
+      message: '해제하면 로그인할 때 문자 확인을 하지 않습니다.\n'
+          '계정을 지키는 힘이 그만큼 약해집니다.',
+      actionLabel: '해제',
+      isDanger: true,
+    );
+    if (!confirmed) return;
+
+    await _run('2단계 인증을 해제했습니다.', () => _mfaUtil.unenroll(info));
+    await _loadFactors();
   }
 
   /// 되돌릴 수 없는 동작 전에 한 번 더 물어보는 창.
@@ -235,6 +316,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
 
             const _SectionNote('여러 수단을 연결해두면 어느 쪽으로 로그인해도 같은 계정으로 들어옵니다.'),
+
+            const _SectionHeader('보안'),
+
+            if (_factors.isEmpty)
+              _ActionTile(label: '2단계 인증 켜기', onTap: _addPhoneFactor)
+            else
+              for (final MultiFactorInfo info in _factors)
+                _FactorTile(
+                  label: describeFactor(info),
+                  onRemove: () => _removeFactor(info),
+                ),
+
+            _SectionNote(
+              _factors.isEmpty
+                  ? '켜두면 로그인할 때 문자로 받은 번호를 한 번 더 입력하게 됩니다. '
+                      '비밀번호나 소셜 계정이 뚫려도 이 단계에서 막힙니다.'
+                  : '이제 로그인할 때마다 이 번호로 인증번호가 갑니다.',
+            ),
 
             const _SectionHeader('정보'),
             _InfoTile(label: '버전', value: kAppVersion),
@@ -330,6 +429,55 @@ class _ProviderTile extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
+    );
+  }
+}
+
+/// 등록된 2단계 인증 수단 한 줄.
+class _FactorTile extends StatelessWidget {
+  const _FactorTile({required this.label, required this.onRemove});
+
+  final String label;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+      leading: const SizedBox(
+        width: 24,
+        height: 24,
+        child: Center(
+          child: Icon(
+            Icons.phone_iphone,
+            size: 22,
+            color: AppColors.text,
+          ),
+        ),
+      ),
+      title: Text(
+        label,
+        style: const TextStyle(
+          color: AppColors.text,
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: const Text(
+        '2단계 인증 켜짐',
+        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+      ),
+      trailing: TextButton(
+        onPressed: onRemove,
+        child: const Text(
+          '해제',
+          style: TextStyle(
+            color: AppColors.danger,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }

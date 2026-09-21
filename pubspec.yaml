@@ -42,6 +42,9 @@ dependencies:
   firebase_app_check: ^0.4.7
 
 dev_dependencies:
+  # 앱 이름을 플랫폼마다 바꿔주는 명령줄 도구.
+  # 앱이 실행되면서 쓰는 패키지가 아니라 개발할 때만 쓰므로 여기에 둔다.
+  rename_app: ^1.6.6
   flutter_test:
     sdk: flutter
 

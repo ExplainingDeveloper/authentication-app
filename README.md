@@ -49,12 +49,6 @@ git checkout classA-final
 
 로그인까지만 있는 상태가 필요하면 `feature/ui-enhancement` 를 받으시면 됩니다.
 
-### 그 외
-
-| 브랜치 | 내용 |
-| --- | --- |
-| `release/google-play` | 플레이스토어 출시 준비 (서명 설정, 계정 삭제 안내 페이지) |
-
 `feature/ui-enhancement`는 로그인 화면·홈·설정 화면을 새로 만든 브랜치입니다.
 로그인 로직(`lib/utils/login_util.dart`)은 `feature/account-link`와 완전히 같으니,
 디자인이 취향에 맞지 않으면 `feature/account-link`를 그대로 쓰셔도 됩니다.

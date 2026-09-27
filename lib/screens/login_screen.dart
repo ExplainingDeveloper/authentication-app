@@ -159,6 +159,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     ? null
                     : () => _signIn('apple', _loginUtil.signInWithApple),
               ),
+              const SizedBox(height: 10),
+              AuthButton(
+                leading: const Icon(
+                  Icons.chat_bubble,
+                  color: Color(0xFF3C1E1E),
+                  size: 20,
+                ),
+                label: '카카오로 계속하기',
+                background: const Color(0xFFFEE500),
+                foreground: const Color(0xFF3C1E1E),
+                isLoading: _pendingProvider == 'kakao',
+                onPressed: isBusy
+                    ? null
+                    : () => _signIn('kakao', _loginUtil.signInWithKakao),
+              ),
 
               const Spacer(flex: 5),
 

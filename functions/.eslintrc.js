@@ -4,7 +4,9 @@ module.exports = {
     node: true,
   },
   parserOptions: {
-    'ecmaVersion': 2018,
+    // Node 22에서 돌아가므로 최신 문법을 허용한다.
+    // 2018로 두면 ?. 나 ?? 같은 문법을 린터가 거부해서 배포가 막힌다.
+    'ecmaVersion': 2022,
   },
   extends: [
     'eslint:recommended',

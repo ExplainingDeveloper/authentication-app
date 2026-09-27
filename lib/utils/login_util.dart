@@ -1,6 +1,12 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:google_sign_in/google_sign_in.dart';
+// 카카오 SDK에도 User 라는 이름이 있어서 firebase_auth의 User와 부딪힌다.
+// 실제로 쓰는 것만 골라서 가져온다.
+import 'package:kakao_flutter_sdk/kakao_flutter_sdk_user.dart'
+    show OAuthToken, UserApi, isKakaoTalkInstalled;
 
 class LoginUtil {
   /// 애플에 요청할 정보를 담은 provider.
@@ -40,7 +46,77 @@ class LoginUtil {
     return await FirebaseAuth.instance.signInWithCredential(credential);
   }
 
+  /// 카카오로 로그인한다.
+  ///
+  /// 구글이나 애플과 흐름이 다르다.
+  /// 저 둘은 파이어베이스가 직접 아는 제공업체라 credential 하나면 끝나는데,
+  /// 카카오는 파이어베이스가 모르는 곳이라 우리 서버가 중간에서 보증을 서야 한다.
+  ///
+  ///   1. 카카오 SDK로 로그인해서 카카오 액세스 토큰을 받는다
+  ///   2. 그 토큰을 Cloud Functions로 보낸다
+  ///   3. 서버가 카카오에 확인한 뒤 파이어베이스 커스텀 토큰을 만들어준다
+  ///   4. 그 토큰으로 파이어베이스에 로그인한다
+  ///
+  /// https://firebase.google.com/docs/auth/admin/create-custom-tokens?hl=ko
+  Future<UserCredential> signInWithKakao() async {
+    // 1. 카카오 로그인
+    //
+    // 카카오톡이 깔려 있으면 앱으로 넘어가는 쪽이 사용자에게 편하다.
+    // 다만 깔려 있어도 실패할 수 있어서(계정이 없거나 사용자가 취소) 그때는
+    // 카카오 계정 로그인으로 넘어간다.
+    final OAuthToken token = await _kakaoLogin();
+
+    // 2~3. 서버에 토큰을 보내 커스텀 토큰을 받아온다
+    final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+      'kakaoCustomToken',
+    );
+
+    final HttpsCallableResult<dynamic> result = await callable.call<dynamic>(
+      <String, dynamic>{'accessToken': token.accessToken},
+    );
+
+    final String? customToken =
+        (result.data as Map<dynamic, dynamic>)['customToken'] as String?;
+
+    if (customToken == null) {
+      throw FirebaseAuthException(
+        code: 'kakao-token-missing',
+        message: '카카오 로그인 처리에 실패했습니다.',
+      );
+    }
+
+    // 4. 파이어베이스 로그인
+    return FirebaseAuth.instance.signInWithCustomToken(customToken);
+  }
+
+  /// 카카오톡이 있으면 카카오톡으로, 아니면 카카오 계정으로 로그인한다.
+  Future<OAuthToken> _kakaoLogin() async {
+    if (await isKakaoTalkInstalled()) {
+      try {
+        return await UserApi.instance.loginWithKakaoTalk();
+      } on PlatformException catch (error) {
+        // 사용자가 카카오톡 로그인 창을 그냥 닫은 경우.
+        // 이때 계정 로그인으로 넘어가면 창이 또 떠서 사용자가 당황한다.
+        if (error.code == 'CANCELED') rethrow;
+      } catch (_) {
+        // 카카오톡은 깔려 있는데 로그인이 안 되는 경우가 있다.
+        // (로그인된 계정이 없거나 앱 버전이 너무 낮을 때)
+        // 이럴 때는 아래 카카오 계정 로그인으로 넘어간다.
+      }
+    }
+
+    return UserApi.instance.loginWithKakaoAccount();
+  }
+
   Future<void> signOut() async {
+    // 카카오 쪽 로그인 상태도 같이 정리한다.
+    // 이걸 안 하면 다시 로그인할 때 계정 선택 창 없이 바로 들어가버린다.
+    try {
+      await UserApi.instance.logout();
+    } catch (_) {
+      // 카카오로 로그인한 적이 없으면 실패한다. 그냥 넘어가면 된다.
+    }
+
     await FirebaseAuth.instance.signOut();
   }
 

@@ -10,11 +10,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+// 카카오 SDK의 User 가 firebase_auth 의 User 와 이름이 겹친다.
+// 여기서는 초기화만 하므로 KakaoSdk 만 가져온다.
+import 'package:kakao_flutter_sdk/kakao_flutter_sdk_user.dart' show KakaoSdk;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
- 
+
   await FirebaseAppCheck.instance.activate(
     // 개발 중에는 debug, 출시 빌드에서는 진짜 검증 방식을 쓴다.
     //
@@ -51,6 +54,10 @@ Future<void> main() async {
   );
 
   await GoogleSignIn.instance.initialize();
+  await KakaoSdk.init(
+    nativeAppKey: 'eae93fe6f9a42c1ed889fffddb93b947',
+    javaScriptAppKey: '2b6b53ef84cbeaf086c40017b1b4d38d',
+  );
 
   runApp(const MyApp());
 }

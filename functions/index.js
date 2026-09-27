@@ -7,7 +7,7 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-const { onRequest } = require('firebase-functions/v2/https');
+const { onRequest, onCall, HttpsError } = require('firebase-functions/v2/https');
 const logger = require('firebase-functions/logger');
 const admin = require('firebase-admin');
 const appleSignin = require('apple-signin-auth');
@@ -74,4 +74,103 @@ exports.appleServerToServerNotification = onRequest(async (req, response) => {
     logger.error('Apple 알림 검증 실패', error);
     response.sendStatus(500);
   }
+});
+
+
+// ---------------------------------------------------------------------------
+// 카카오 로그인 -> Firebase 커스텀 토큰
+// ---------------------------------------------------------------------------
+//
+// 카카오는 파이어베이스가 기본으로 지원하는 로그인 수단이 아니다.
+// 구글은 GoogleAuthProvider.credential(), 애플은 AppleAuthProvider()가 있지만
+// KakaoAuthProvider 같은 건 존재하지 않는다.
+//
+// 그래서 우리가 중간에서 보증을 선다.
+//   앱   : 카카오 SDK로 로그인해서 카카오 액세스 토큰을 받는다
+//   여기 : 그 토큰이 진짜인지 카카오에 물어보고, 파이어베이스 토큰을 발급한다
+//   앱   : 받은 토큰으로 signInWithCustomToken()
+//
+// 근거 문서
+//   https://firebase.google.com/docs/auth/admin/create-custom-tokens?hl=ko
+//   https://developers.kakao.com/docs/latest/ko/kakaologin/rest-api
+
+/**
+ * 카카오 사용자 정보를 가져온다.
+ *
+ * 이 요청이 성공했다는 것 자체가 "토큰이 진짜"라는 증명이다.
+ * 위조한 토큰이면 카카오가 401을 돌려주기 때문이다.
+ *
+ * @param {string} accessToken 앱이 카카오 SDK로 받아온 액세스 토큰
+ * @return {Promise<Object>} 카카오가 내려주는 사용자 정보
+ */
+async function fetchKakaoUser(accessToken) {
+  const response = await fetch('https://kapi.kakao.com/v2/user/me', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    logger.warn(`카카오 토큰 검증 실패 (${response.status}): ${body}`);
+    throw new HttpsError('unauthenticated', '카카오 토큰이 유효하지 않습니다.');
+  }
+
+  return response.json();
+}
+
+/**
+ * 파이어베이스 사용자 정보를 카카오에서 받아온 값으로 맞춰둔다.
+ *
+ * 커스텀 토큰은 uid만 담을 수 있고 이름이나 이메일은 못 담는다.
+ * 그래서 토큰을 만들기 전에 Admin SDK로 사용자 기록을 직접 손봐준다.
+ * 이렇게 해두면 앱에서는 구글/애플로 로그인했을 때와 똑같이
+ * user.email, user.displayName 을 쓸 수 있다.
+ *
+ * @param {string} uid 우리가 정한 파이어베이스 사용자 번호
+ * @param {Object} profile 이메일, 이름 등 맞춰둘 값
+ * @return {Promise<void>}
+ */
+async function upsertFirebaseUser(uid, profile) {
+  try {
+    await admin.auth().updateUser(uid, profile);
+  } catch (error) {
+    if (error.code === 'auth/user-not-found') {
+      await admin.auth().createUser({ uid, ...profile });
+      return;
+    }
+    throw error;
+  }
+}
+
+exports.kakaoCustomToken = onCall(async (request) => {
+  const accessToken = request.data?.accessToken;
+
+  if (!accessToken) {
+    throw new HttpsError('invalid-argument', 'accessToken 이 필요합니다.');
+  }
+
+  const kakaoUser = await fetchKakaoUser(accessToken);
+
+  // uid는 우리가 직접 정한다. 구글/애플처럼 파이어베이스가 만들어주지 않는다.
+  //
+  // 접두어를 붙이는 이유는 다른 로그인 수단의 uid와 겹치지 않게 하려는 것이다.
+  // 한번 정하면 바꾸기 어렵다. 바꾸는 순간 기존 사용자가 전부 새 계정이 된다.
+  const uid = `kakao:${kakaoUser.id}`;
+
+  const account = kakaoUser.kakao_account ?? {};
+  const profile = {};
+
+  // 값이 있을 때만 담는다. 카카오는 동의 항목을 사용자가 끌 수 있어서
+  // 이메일이나 닉네임이 아예 안 올 수 있다.
+  if (account.email) profile.email = account.email;
+  if (account.profile?.nickname) profile.displayName = account.profile.nickname;
+  if (account.profile?.profile_image_url) {
+    profile.photoURL = account.profile.profile_image_url;
+  }
+
+  await upsertFirebaseUser(uid, profile);
+
+  const customToken = await admin.auth().createCustomToken(uid);
+  logger.info(`[카카오] 커스텀 토큰 발급 uid=${uid}`);
+
+  return { customToken };
 });

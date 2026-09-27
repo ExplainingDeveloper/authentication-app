@@ -1,5 +1,7 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:google_sign_in/google_sign_in.dart';
 
 /// 에러를 화면에 보여줄 문장으로 바꾼다.
@@ -14,6 +16,17 @@ String? authErrorMessage(Object error) {
   if (error is GoogleSignInException) {
     if (error.code == GoogleSignInExceptionCode.canceled) return null;
     return '구글 로그인에 실패했습니다.';
+  }
+
+  // 카카오 로그인 창을 그냥 닫은 경우.
+  if (error is PlatformException && error.code == 'CANCELED') return null;
+
+  // 카카오 토큰을 커스텀 토큰으로 바꾸는 서버 호출이 실패한 경우.
+  if (error is FirebaseFunctionsException) {
+    if (error.code == 'unauthenticated') {
+      return '카카오 로그인 정보가 유효하지 않습니다. 다시 시도해주세요.';
+    }
+    return '카카오 로그인 처리 중 문제가 발생했습니다.';
   }
 
   if (error is FirebaseAuthException) {

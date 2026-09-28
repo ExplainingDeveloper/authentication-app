@@ -1,3 +1,4 @@
+import 'package:authentication_app/kakao_keys.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -67,9 +68,22 @@ class LoginUtil {
     final OAuthToken token = await _kakaoLogin();
 
     // 2~3. 서버에 토큰을 보내 커스텀 토큰을 받아온다
-    final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
-      'kakaoCustomToken',
-    );
+    //
+    // 이름이 아니라 주소로 부르는 이유.
+    //
+    // 함수를 어떻게 올렸느냐에 따라 주소 모양이 달라진다.
+    //   터미널 배포  https://<리전>-<프로젝트ID>.cloudfunctions.net/<함수이름>
+    //   콘솔에서 생성 https://<서비스이름>-<프로젝트번호>.<리전>.run.app
+    //
+    // httpsCallable('이름') 은 위쪽 모양을 만들어서 찾아간다.
+    // 우리는 콘솔에서 만들었으니 그 주소로는 못 찾는다. 그래서 주소를 직접 준다.
+    //
+    // 터미널로 배포하셨다면 아래 한 줄로 바꾸시면 된다.
+    //   FirebaseFunctions.instance.httpsCallable('kakaoCustomToken')
+    // 단, 함수를 us-central1 이 아닌 곳에 올렸다면 리전도 같이 알려줘야 한다.
+    //   FirebaseFunctions.instanceFor(region: 'europe-west1')
+    final HttpsCallable callable = FirebaseFunctions.instance
+        .httpsCallableFromUrl(kakaoFunctionUrl);
 
     final HttpsCallableResult<dynamic> result = await callable.call<dynamic>(
       <String, dynamic>{'accessToken': token.accessToken},

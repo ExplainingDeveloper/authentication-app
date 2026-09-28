@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:authentication_app/firebase_options.dart';
+import 'package:authentication_app/kakao_keys.dart';
 import 'package:authentication_app/screens/home_screen.dart';
 import 'package:authentication_app/screens/login_screen.dart';
 import 'package:authentication_app/theme/app_theme.dart';
@@ -54,9 +55,13 @@ Future<void> main() async {
   );
 
   await GoogleSignIn.instance.initialize();
+
+  // 카카오 키는 소스에 직접 적지 않고 kakao_keys.dart 에서 가져온다.
+  // 그 파일은 저장소에 올라가지 않는다. (.gitignore)
+  // 파이어베이스 설정 파일을 다루는 방식과 같다.
   await KakaoSdk.init(
-    nativeAppKey: 'eae93fe6f9a42c1ed889fffddb93b947',
-    javaScriptAppKey: '2b6b53ef84cbeaf086c40017b1b4d38d',
+    nativeAppKey: kakaoNativeAppKey,
+    javaScriptAppKey: kakaoJavaScriptAppKey,
   );
 
   runApp(const MyApp());

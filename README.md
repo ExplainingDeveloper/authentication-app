@@ -72,6 +72,114 @@ git checkout classA-final
 앱 아이콘과 고객센터·개인정보처리방침 페이지를 만들 때 쓴 프롬프트를
 [`PROMPTS.md`](PROMPTS.md) 에 모아뒀습니다.
 
+## 심사자가 로그인할 수 있게 하기
+
+> 이 저장소에만 있는 참고 코드입니다. 강의 본편에서는 다루지 않습니다.
+
+애플 심사에서는 **심사자가 직접 로그인해서** 앱을 확인합니다.
+그런데 이 앱처럼 소셜 로그인만 있으면 심사자가 들어올 방법이 없습니다.
+
+실제로 이런 반려를 받았습니다.
+
+```
+Guideline 2.1 - Information Needed
+
+We were unable to sign in with the following demo account credentials
+you provided in App Store Connect.
+```
+
+아이디와 비밀번호를 적어줘도 **앱에 넣을 칸이 없고**, 진짜 구글 계정을 줘도
+처음 보는 기기에서 로그인하면 **구글이 추가 확인을 걸어서** 막힙니다.
+
+애플이 제시한 해결책은 두 가지입니다.
+
+> Provide the username and password for a valid demo account ... **or include a
+> demonstration mode** that shows all of the features and functionality.
+
+그래서 이 저장소에는 **두 가지를 다 넣어뒀습니다.** 실제로는 둘 중 하나만
+있으면 됩니다. 로그인 화면 아래쪽 `이메일로 로그인 · 둘러보기` 가 그것입니다.
+
+### 어느 쪽을 고를까
+
+| | 이메일 로그인 | 둘러보기 (익명) |
+| --- | --- | --- |
+| 언제 | 실제 서비스할 앱이라 계정 기능이 어차피 필요할 때 | 소셜 로그인만 유지하고 싶을 때 |
+| 콘솔 설정 | 이메일/비밀번호 켜기 | 익명 켜기 |
+| 만들 것 | 입력 창 + 심사용 계정 | 버튼 하나 |
+| 심사 정보 | 계정·비밀번호 적기 | "로그인 필요: 아니오" |
+
+### 길 1. 이메일 로그인
+
+**콘솔 설정** — Authentication → 로그인 방법 → **이메일/비밀번호** 사용 설정
+
+**심사용 계정 만들기** — Authentication → **사용자** 탭 → 사용자 추가
+
+> 이 버튼은 이메일/비밀번호를 켜야 나타납니다.
+
+**코드** — [`LoginUtil.signInWithEmail`](lib/utils/login_util.dart),
+[`email_login_dialog.dart`](lib/widgets/email_login_dialog.dart)
+
+```dart
+await FirebaseAuth.instance.signInWithEmailAndPassword(
+  email: email,
+  password: password,
+);
+```
+
+**회원가입은 일부러 넣지 않았습니다.** 심사용 계정은 콘솔에서 직접 만들면 되니까요.
+실제 서비스에 쓰실 거면 `createUserWithEmailAndPassword`(회원가입)와
+`sendPasswordResetEmail`(비밀번호 재설정)을 더 붙이시면 됩니다.
+
+**심사 정보에는 이렇게 적습니다.**
+
+```
+로그인 필요: 예
+사용자 이름: review@내도메인.com
+비밀번호:   (실제 비밀번호)
+
+메모:
+로그인 화면 아래쪽 "이메일로 로그인"을 누르신 뒤
+위 계정으로 들어오시면 됩니다.
+```
+
+### 길 2. 둘러보기 (익명 로그인)
+
+애플이 말한 **demonstration mode** 가 이 방식입니다.
+
+**콘솔 설정** — Authentication → 로그인 방법 → **익명** 사용 설정
+
+**코드** — [`LoginUtil.signInAnonymously`](lib/utils/login_util.dart)
+
+```dart
+await FirebaseAuth.instance.signInAnonymously();
+```
+
+이 한 줄이면 됩니다. 아이디도 비밀번호도 필요 없습니다.
+
+알아두실 점이 두 가지 있습니다.
+
+- 익명 계정은 **이메일도 이름도 없어서** 홈 화면에 "사용자"로만 뜹니다.
+  심사자가 기능을 둘러보는 데는 문제가 없습니다.
+- 이 계정은 **그 기기에만 남습니다.** 앱을 지우면 다시 들어갈 수 없습니다.
+  실제 서비스에서 제공하실 거면, 나중에 소셜 계정으로 이어 쓸 수 있도록
+  `linkWithCredential` 로 연결해주는 게 좋습니다.
+
+**심사 정보에는 이렇게 적습니다.**
+
+```
+로그인 필요: 아니오
+
+메모:
+이 앱은 구글 / 애플 로그인만 지원합니다.
+심사를 위해 로그인 화면 아래쪽에 "둘러보기" 버튼을 두었습니다.
+그 버튼을 누르시면 로그인 없이 모든 기능을 확인하실 수 있습니다.
+```
+
+### 숨기지 마세요
+
+"로고를 3초 길게 누르면 나온다" 같은 식으로 만들면 **심사자가 못 찾아서 또 반려됩니다.**
+화면에 보이게 두시고, 그래도 숨기실 거면 심사 메모에 찾는 방법을 정확히 적어주세요.
+
 ## Firebase 설정 파일
 
 Firebase 설정 파일은 각자 계정 정보라서 저장소에 올라가 있지 않습니다.

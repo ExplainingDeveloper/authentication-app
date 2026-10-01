@@ -182,26 +182,54 @@ class _LoginScreenState extends State<LoginScreen> {
                     : () => _signIn('apple', _loginUtil.signInWithApple),
               ),
 
-              // 앱 심사용 이메일 로그인.
+              // 여기부터 두 줄은 앱 심사용으로 넣어둔 참고 코드다.
               //
-              // 강의 본편에서 다루지 않는 참고 코드다. 자세한 이유는
-              // LoginUtil.signInWithEmail 의 설명을 보면 된다.
+              // 강의 본편에서 다루지 않는다. 자세한 이유는
+              // LoginUtil 의 signInWithEmail 과 signInAnonymously 설명에 있다.
+              //
+              // 둘 중 하나만 있으면 된다. 둘 다 둔 건 보여드리기 위해서다.
               //
               // 소셜 버튼처럼 크게 두지 않고 글자 버튼으로 작게 뒀다.
               // 심사자는 찾을 수 있고 일반 사용자에게는 덜 눈에 띄게 하려는 것이다.
               // 다만 아예 숨기지는 않았다. 심사자가 못 찾으면 또 반려당한다.
               const SizedBox(height: 4),
-              TextButton(
-                onPressed: isBusy ? null : _signInWithEmail,
-                child: Text(
-                  '이메일로 로그인',
-                  style: TextStyle(
-                    color: _pendingProvider == 'email'
-                        ? AppColors.accent
-                        : AppColors.textSecondary,
-                    fontSize: 13,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  TextButton(
+                    onPressed: isBusy ? null : _signInWithEmail,
+                    child: Text(
+                      '이메일로 로그인',
+                      style: TextStyle(
+                        color: _pendingProvider == 'email'
+                            ? AppColors.accent
+                            : AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
-                ),
+                  const Text(
+                    '·',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: isBusy
+                        ? null
+                        : () => _signIn('guest', _loginUtil.signInAnonymously),
+                    child: Text(
+                      '둘러보기',
+                      style: TextStyle(
+                        color: _pendingProvider == 'guest'
+                            ? AppColors.accent
+                            : AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               const Spacer(flex: 5),

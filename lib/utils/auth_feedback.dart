@@ -41,6 +41,24 @@ String? authErrorMessage(Object error) {
         return '이미 등록된 번호입니다.';
       case 'maximum-second-factor-count-exceeded':
         return '더 이상 2단계 인증 수단을 추가할 수 없습니다.';
+
+      // 여기부터는 이메일 로그인에서 나오는 코드들.
+      //
+      // 요즘 파이어베이스는 아이디가 틀렸는지 비밀번호가 틀렸는지 구분해서
+      // 알려주지 않고 invalid-credential 하나로 묶어서 준다.
+      // 남의 계정이 있는지 없는지를 떠보지 못하게 막으려는 것이다.
+      // 그래서 안내 문구도 둘을 합쳐서 쓴다.
+      case 'invalid-credential':
+      case 'user-not-found':
+      case 'wrong-password':
+        return '이메일 또는 비밀번호가 올바르지 않습니다.';
+      case 'invalid-email':
+        return '이메일 형식이 올바르지 않습니다.';
+      case 'user-disabled':
+        return '사용이 중지된 계정입니다.';
+      case 'operation-not-allowed':
+        return '이메일 로그인이 꺼져 있습니다. '
+            '파이어베이스 콘솔에서 이메일/비밀번호를 켜주세요.';
     }
 
     // LoginUtil에서 이미 사람이 읽을 문장으로 바꿔 던진 경우가 있다.

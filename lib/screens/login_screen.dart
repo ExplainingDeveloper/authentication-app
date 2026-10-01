@@ -4,6 +4,7 @@ import 'package:authentication_app/utils/auth_feedback.dart';
 import 'package:authentication_app/utils/login_util.dart';
 import 'package:authentication_app/utils/mfa_util.dart';
 import 'package:authentication_app/widgets/auth_button.dart';
+import 'package:authentication_app/widgets/email_login_dialog.dart';
 import 'package:authentication_app/widgets/google_logo.dart';
 import 'package:authentication_app/widgets/text_input_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -56,6 +57,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
       setState(() => _pendingProvider = null);
     }
+  }
+
+  /// 이메일과 비밀번호로 로그인한다.
+  ///
+  /// 창을 띄워 값을 받은 다음은 소셜 로그인과 똑같은 길을 탄다.
+  /// 그래서 _signIn 을 그대로 재사용한다.
+  /// 사용자 저장도, 2단계 인증 처리도, 에러 안내도 한 번에 따라온다.
+  Future<void> _signInWithEmail() async {
+    final EmailLogin? input = await showEmailLoginDialog(context);
+
+    // 사용자가 창을 닫았거나 빈 칸으로 눌렀다면 아무것도 하지 않는다.
+    if (input == null) return;
+    if (input.email.trim().isEmpty || input.password.isEmpty) return;
+
+    await _signIn(
+      'email',
+      () => _loginUtil.signInWithEmail(
+        email: input.email,
+        password: input.password,
+      ),
+    );
   }
 
   /// 2단계 인증이 켜진 계정의 로그인을 마저 끝낸다.
@@ -158,6 +180,28 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: isBusy
                     ? null
                     : () => _signIn('apple', _loginUtil.signInWithApple),
+              ),
+
+              // 앱 심사용 이메일 로그인.
+              //
+              // 강의 본편에서 다루지 않는 참고 코드다. 자세한 이유는
+              // LoginUtil.signInWithEmail 의 설명을 보면 된다.
+              //
+              // 소셜 버튼처럼 크게 두지 않고 글자 버튼으로 작게 뒀다.
+              // 심사자는 찾을 수 있고 일반 사용자에게는 덜 눈에 띄게 하려는 것이다.
+              // 다만 아예 숨기지는 않았다. 심사자가 못 찾으면 또 반려당한다.
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: isBusy ? null : _signInWithEmail,
+                child: Text(
+                  '이메일로 로그인',
+                  style: TextStyle(
+                    color: _pendingProvider == 'email'
+                        ? AppColors.accent
+                        : AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
               ),
 
               const Spacer(flex: 5),

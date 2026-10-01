@@ -40,6 +40,39 @@ class LoginUtil {
     return await FirebaseAuth.instance.signInWithCredential(credential);
   }
 
+  /// 이메일과 비밀번호로 로그인한다.
+  ///
+  /// 이건 강의 본편에서 다루지 않는 참고용 코드다.
+  /// 앱 심사 때문에 넣어둔 것이라, 쓰실 분만 가져다 쓰시면 된다.
+  ///
+  /// 왜 필요한가.
+  ///
+  /// 애플 심사에서는 심사자가 직접 로그인해서 앱을 확인한다.
+  /// 그런데 우리처럼 소셜 로그인만 있는 앱은 심사자가 들어올 방법이 없다.
+  /// 아이디와 비밀번호를 적어줘도 넣을 칸이 없고, 진짜 구글 계정을 줘도
+  /// 처음 보는 기기에서 로그인하면 구글이 추가 확인을 걸어서 막힌다.
+  ///
+  /// 그래서 심사용 계정 하나를 이메일/비밀번호로 만들어두고,
+  /// 로그인 화면에 들어오는 길을 열어두는 것이다.
+  ///
+  /// 회원가입은 일부러 만들지 않았다.
+  /// 심사용 계정은 파이어베이스 콘솔에서 직접 추가하면 되기 때문이다.
+  ///   Authentication -> 사용자 탭 -> 사용자 추가
+  /// (이 버튼은 로그인 방법에서 이메일/비밀번호를 켜야 나타난다)
+  ///
+  /// 실제 서비스에 이메일 로그인을 넣으실 거라면 여기에
+  /// createUserWithEmailAndPassword 로 회원가입을,
+  /// sendPasswordResetEmail 로 비밀번호 재설정을 더 붙이면 된다.
+  Future<UserCredential> signInWithEmail({
+    required String email,
+    required String password,
+  }) {
+    return FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+  }
+
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
   }

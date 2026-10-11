@@ -14,7 +14,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 ///
 /// 둘 다 필요하시면 켜두시고, 심사용 계정만 메일을 실제로 받아
 /// 한 번 눌러두시면 된다.
-const bool requireEmailVerification = false;
+const bool requireEmailVerification = true;
 
 class LoginUtil {
   /// 애플에 요청할 정보를 담은 provider.

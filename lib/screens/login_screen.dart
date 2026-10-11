@@ -67,15 +67,22 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signInWithEmail() async {
     final EmailLogin? input = await showEmailLoginDialog(context);
 
-    // 사용자가 창을 닫았거나 빈 칸으로 눌렀다면 아무것도 하지 않는다.
+    // 사용자가 창을 닫았으면 아무것도 하지 않는다.
     if (input == null) return;
-    if (input.email.trim().isEmpty || input.password.isEmpty) return;
+    if (input.email.trim().isEmpty) return;
 
     // 비밀번호 재설정은 로그인이 아니라 메일만 보내고 끝난다.
+    //
+    // 비밀번호 검사보다 먼저 갈라줘야 한다.
+    // 재설정 모드에서는 비밀번호 칸을 숨기기 때문에 값이 항상 비어 있어서,
+    // 아래 검사에 걸리면 메일이 발송되지 않는다.
     if (input.action == EmailAction.resetPassword) {
       await _sendPasswordReset(input.email);
       return;
     }
+
+    // 로그인과 가입은 비밀번호가 있어야 한다.
+    if (input.password.isEmpty) return;
 
     // 가입을 눌렀으면 계정을 만들고, 아니면 로그인한다.
     // 가입에 성공하면 그대로 로그인된 상태가 되므로 뒤는 똑같다.

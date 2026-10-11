@@ -2,6 +2,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 
+/// 이메일 인증을 끝낸 계정만 들어오게 할지.
+///
+/// 용도에 따라 갈린다.
+///
+///   false  심사·테스트용. 콘솔에서 만든 계정으로 바로 들어와야 한다.
+///          콘솔로 추가한 계정은 인증이 안 된 상태라, 켜두면 심사자가 막힌다.
+///
+///   true   실제 서비스용. 아무 이메일이나 적고 가입하는 걸 막는다.
+///          인증을 안 받으면 비밀번호 재설정 메일이 엉뚱한 사람에게 간다.
+///
+/// 둘 다 필요하시면 켜두시고, 심사용 계정만 메일을 실제로 받아
+/// 한 번 눌러두시면 된다.
+const bool requireEmailVerification = false;
+
 class LoginUtil {
   /// 애플에 요청할 정보를 담은 provider.
   ///
@@ -66,11 +80,12 @@ class LoginUtil {
   Future<UserCredential> signInWithEmail({
     required String email,
     required String password,
-  }) {
-    return FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
+  }) async {
+    final UserCredential credential = await FirebaseAuth.instance
+        .signInWithEmailAndPassword(email: email.trim(), password: password);
+
+    await _requireVerifiedEmail(credential.user);
+    return credential;
   }
 
   /// 이메일과 비밀번호로 회원가입한다.
@@ -107,10 +122,45 @@ class LoginUtil {
     try {
       await credential.user?.sendEmailVerification();
     } catch (_) {
-      // 메일 발송에 실패해도 로그인은 그대로 진행한다.
+      // 메일 발송에 실패해도 가입은 이미 끝난 상태다.
     }
 
+    await _requireVerifiedEmail(credential.user);
     return credential;
+  }
+
+  /// 인증을 강제하는 설정이면, 인증 전 계정을 내보낸다.
+  ///
+  /// 파이어베이스는 인증 여부와 상관없이 로그인을 시켜준다.
+  /// 막는 건 우리 몫이라 여기서 확인하고 로그아웃시킨다.
+  ///
+  /// 소셜 로그인과 둘러보기는 건드리지 않는다.
+  /// 구글이나 애플은 그쪽에서 이미 확인한 계정이고,
+  /// 익명 계정은 이메일 자체가 없어서 검사할 대상이 아니다.
+  Future<void> _requireVerifiedEmail(User? user) async {
+    if (!requireEmailVerification) return;
+    if (user == null || user.emailVerified) return;
+
+    await FirebaseAuth.instance.signOut();
+
+    throw FirebaseAuthException(
+      code: 'email-not-verified',
+      message: '메일로 보낸 링크를 눌러 인증을 끝낸 뒤 로그인해주세요.',
+    );
+  }
+
+  /// 비밀번호 재설정 메일을 보낸다.
+  ///
+  /// 소셜 로그인에는 없던 일이다. 구글이나 애플은 비밀번호를 그쪽에서
+  /// 관리하니 우리가 신경 쓸 게 없었는데, 이메일 로그인은 우리 몫이다.
+  ///
+  /// 여기서 이메일 인증이 왜 중요한지가 드러난다.
+  /// 인증 없이 아무 주소로나 가입할 수 있으면, 이 메일이 엉뚱한 사람에게 간다.
+  ///
+  /// 가입된 주소가 아니어도 에러를 내지 않는다.
+  /// 에러를 내면 "이 주소는 가입돼 있다"를 알려주는 셈이기 때문이다.
+  Future<void> sendPasswordResetEmail(String email) {
+    return FirebaseAuth.instance.sendPasswordResetEmail(email: email.trim());
   }
 
   /// 로그인 없이 둘러보기. (익명 로그인)

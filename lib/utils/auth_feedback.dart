@@ -65,6 +65,8 @@ String? authErrorMessage(Object error) {
         return '이미 가입된 이메일입니다. 로그인해주세요.';
       case 'weak-password':
         return '비밀번호가 너무 짧습니다. 6자 이상으로 지어주세요.';
+      case 'email-not-verified':
+        return '메일로 보낸 링크를 눌러 인증을 끝낸 뒤 로그인해주세요.';
     }
 
     // LoginUtil에서 이미 사람이 읽을 문장으로 바꿔 던진 경우가 있다.

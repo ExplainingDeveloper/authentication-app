@@ -71,11 +71,17 @@ class _LoginScreenState extends State<LoginScreen> {
     if (input == null) return;
     if (input.email.trim().isEmpty || input.password.isEmpty) return;
 
+    // 비밀번호 재설정은 로그인이 아니라 메일만 보내고 끝난다.
+    if (input.action == EmailAction.resetPassword) {
+      await _sendPasswordReset(input.email);
+      return;
+    }
+
     // 가입을 눌렀으면 계정을 만들고, 아니면 로그인한다.
     // 가입에 성공하면 그대로 로그인된 상태가 되므로 뒤는 똑같다.
     await _signIn(
       'email',
-      () => input.isSignUp
+      () => input.action == EmailAction.signUp
           ? _loginUtil.signUpWithEmail(
               email: input.email,
               password: input.password,
@@ -85,6 +91,27 @@ class _LoginScreenState extends State<LoginScreen> {
               password: input.password,
             ),
     );
+  }
+
+  /// 비밀번호 재설정 메일을 보낸다.
+  ///
+  /// 가입된 주소가 아니어도 똑같이 "보냈다"고 알린다.
+  /// 여기서 구분해주면 어떤 주소가 가입돼 있는지 떠볼 수 있기 때문이다.
+  Future<void> _sendPasswordReset(String email) async {
+    setState(() => _pendingProvider = 'email');
+
+    try {
+      await _loginUtil.sendPasswordResetEmail(email);
+      if (!mounted) return;
+      showToast(context, '재설정 메일을 보냈습니다. 메일함을 확인해주세요.');
+    } catch (error) {
+      if (!mounted) return;
+      final String? message = authErrorMessage(error);
+      if (message != null) showToast(context, message);
+    }
+
+    if (!mounted) return;
+    setState(() => _pendingProvider = null);
   }
 
   /// 2단계 인증이 켜진 계정의 로그인을 마저 끝낸다.

@@ -1,11 +1,22 @@
 import 'package:authentication_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
+/// 이 창에서 할 수 있는 일.
+enum EmailAction {
+  /// 이미 있는 계정으로 들어오기.
+  signIn,
+
+  /// 계정 새로 만들기.
+  signUp,
+
+  /// 비밀번호 재설정 메일 받기. 이때는 비밀번호 칸을 쓰지 않는다.
+  resetPassword,
+}
+
 /// 이메일 로그인 창이 돌려주는 값.
 ///
-/// 로그인과 회원가입을 한 창에서 처리하므로,
-/// 어느 쪽을 눌렀는지(isSignUp)도 같이 돌려준다.
-typedef EmailLogin = ({String email, String password, bool isSignUp});
+/// 세 가지 일을 한 창에서 처리하므로 어느 쪽을 눌렀는지도 같이 돌려준다.
+typedef EmailLogin = ({String email, String password, EmailAction action});
 
 /// 이메일과 비밀번호를 받는 창.
 ///
@@ -40,8 +51,10 @@ class _EmailLoginDialogState extends State<_EmailLoginDialog> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  /// 회원가입 모드인지. false면 로그인이다.
-  bool _isSignUp = false;
+  EmailAction _action = EmailAction.signIn;
+
+  bool get _isSignUp => _action == EmailAction.signUp;
+  bool get _isReset => _action == EmailAction.resetPassword;
 
   @override
   void dispose() {
@@ -54,14 +67,20 @@ class _EmailLoginDialogState extends State<_EmailLoginDialog> {
     Navigator.pop(context, (
       email: _emailController.text,
       password: _passwordController.text,
-      isSignUp: _isSignUp,
+      action: _action,
     ));
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(_isSignUp ? '이메일로 가입' : '이메일로 로그인'),
+      title: Text(
+        switch (_action) {
+          EmailAction.signIn => '이메일로 로그인',
+          EmailAction.signUp => '이메일로 가입',
+          EmailAction.resetPassword => '비밀번호 재설정',
+        },
+      ),
 
       // 키보드가 올라오면 창에 남는 높이가 줄어든다.
       // 스크롤을 감싸두지 않으면 그때 내용이 넘쳐서 화면이 깨진다.
@@ -71,9 +90,12 @@ class _EmailLoginDialogState extends State<_EmailLoginDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              _isSignUp
-                  ? '비밀번호는 6자 이상이어야 합니다.'
-                  : '가입해둔 계정으로 들어옵니다.',
+              switch (_action) {
+                EmailAction.signIn => '가입해둔 계정으로 들어옵니다.',
+                EmailAction.signUp => '비밀번호는 6자 이상이어야 합니다.',
+                EmailAction.resetPassword =>
+                  '가입하신 주소로 재설정 링크를 보내드립니다.',
+              },
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
@@ -90,35 +112,45 @@ class _EmailLoginDialogState extends State<_EmailLoginDialog> {
               autocorrect: false,
               decoration: const InputDecoration(hintText: '이메일'),
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(hintText: '비밀번호'),
-              // 키보드의 완료를 눌러도 넘어가게 한다.
-              onSubmitted: (String value) => _submit(),
-            ),
+            // 재설정은 메일만 보내면 되므로 비밀번호를 받지 않는다.
+            if (!_isReset) ...<Widget>[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(hintText: '비밀번호'),
+                // 키보드의 완료를 눌러도 넘어가게 한다.
+                onSubmitted: (String value) => _submit(),
+              ),
+            ],
             const SizedBox(height: 4),
 
-            // 로그인과 회원가입을 오가는 곳.
-            // 화면을 따로 만들지 않고 한 창에서 바꾸는 쪽이 간단하다.
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: () => setState(() => _isSignUp = !_isSignUp),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            // 세 가지 일을 한 창에서 오간다.
+            // 화면을 따로 만들지 않는 쪽이 간단하다.
+            Row(
+              children: <Widget>[
+                _ModeButton(
+                  label: _action == EmailAction.signIn
+                      ? '계정이 없으신가요?'
+                      : '이미 계정이 있어요',
+                  onPressed: () => setState(() {
+                    _action = _action == EmailAction.signIn
+                        ? EmailAction.signUp
+                        : EmailAction.signIn;
+                  }),
                 ),
-                child: Text(
-                  _isSignUp ? '이미 계정이 있어요' : '계정이 없으신가요?',
-                  style: const TextStyle(
-                    color: AppColors.accent,
-                    fontSize: 13,
+                if (!_isSignUp) ...<Widget>[
+                  const Spacer(),
+                  _ModeButton(
+                    label: _isReset ? '돌아가기' : '비밀번호를 잊으셨나요?',
+                    onPressed: () => setState(() {
+                      _action = _isReset
+                          ? EmailAction.signIn
+                          : EmailAction.resetPassword;
+                    }),
                   ),
-                ),
-              ),
+                ],
+              ],
             ),
           ],
         ),
@@ -135,7 +167,11 @@ class _EmailLoginDialogState extends State<_EmailLoginDialog> {
         TextButton(
           onPressed: _submit,
           child: Text(
-            _isSignUp ? '가입하기' : '로그인',
+            switch (_action) {
+              EmailAction.signIn => '로그인',
+              EmailAction.signUp => '가입하기',
+              EmailAction.resetPassword => '메일 받기',
+            },
             style: const TextStyle(
               color: AppColors.accent,
               fontWeight: FontWeight.w600,
@@ -143,6 +179,30 @@ class _EmailLoginDialogState extends State<_EmailLoginDialog> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// 창 아래에서 모드를 바꾸는 작은 글자 버튼.
+class _ModeButton extends StatelessWidget {
+  const _ModeButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(color: AppColors.accent, fontSize: 13),
+      ),
     );
   }
 }

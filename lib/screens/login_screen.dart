@@ -71,12 +71,19 @@ class _LoginScreenState extends State<LoginScreen> {
     if (input == null) return;
     if (input.email.trim().isEmpty || input.password.isEmpty) return;
 
+    // 가입을 눌렀으면 계정을 만들고, 아니면 로그인한다.
+    // 가입에 성공하면 그대로 로그인된 상태가 되므로 뒤는 똑같다.
     await _signIn(
       'email',
-      () => _loginUtil.signInWithEmail(
-        email: input.email,
-        password: input.password,
-      ),
+      () => input.isSignUp
+          ? _loginUtil.signUpWithEmail(
+              email: input.email,
+              password: input.password,
+            )
+          : _loginUtil.signInWithEmail(
+              email: input.email,
+              password: input.password,
+            ),
     );
   }
 

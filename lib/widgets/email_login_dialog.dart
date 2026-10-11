@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 
 /// 이메일 로그인 창이 돌려주는 값.
 ///
-/// 이메일과 비밀번호를 한 번에 받아야 해서 둘을 묶었다.
-typedef EmailLogin = ({String email, String password});
+/// 로그인과 회원가입을 한 창에서 처리하므로,
+/// 어느 쪽을 눌렀는지(isSignUp)도 같이 돌려준다.
+typedef EmailLogin = ({String email, String password, bool isSignUp});
 
 /// 이메일과 비밀번호를 받는 창.
 ///
-/// 앱 심사용으로 넣어둔 참고 코드다. 자세한 내용은
-/// LoginUtil.signInWithEmail 의 설명을 보면 된다.
+/// 아래 글자를 눌러 로그인과 회원가입을 오갈 수 있다.
+/// 자세한 내용은 LoginUtil 의 signInWithEmail / signUpWithEmail 설명을 보면 된다.
 ///
 /// 사용자가 취소하면 null을 돌려준다.
 Future<EmailLogin?> showEmailLoginDialog(BuildContext context) {
@@ -39,6 +40,9 @@ class _EmailLoginDialogState extends State<_EmailLoginDialog> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  /// 회원가입 모드인지. false면 로그인이다.
+  bool _isSignUp = false;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -50,13 +54,14 @@ class _EmailLoginDialogState extends State<_EmailLoginDialog> {
     Navigator.pop(context, (
       email: _emailController.text,
       password: _passwordController.text,
+      isSignUp: _isSignUp,
     ));
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('이메일로 로그인'),
+      title: Text(_isSignUp ? '이메일로 가입' : '이메일로 로그인'),
 
       // 키보드가 올라오면 창에 남는 높이가 줄어든다.
       // 스크롤을 감싸두지 않으면 그때 내용이 넘쳐서 화면이 깨진다.
@@ -65,9 +70,14 @@ class _EmailLoginDialogState extends State<_EmailLoginDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text(
-              '미리 만들어둔 계정으로 들어옵니다.',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            Text(
+              _isSignUp
+                  ? '비밀번호는 6자 이상이어야 합니다.'
+                  : '가입해둔 계정으로 들어옵니다.',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -88,6 +98,28 @@ class _EmailLoginDialogState extends State<_EmailLoginDialog> {
               // 키보드의 완료를 눌러도 넘어가게 한다.
               onSubmitted: (String value) => _submit(),
             ),
+            const SizedBox(height: 4),
+
+            // 로그인과 회원가입을 오가는 곳.
+            // 화면을 따로 만들지 않고 한 창에서 바꾸는 쪽이 간단하다.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => setState(() => _isSignUp = !_isSignUp),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  _isSignUp ? '이미 계정이 있어요' : '계정이 없으신가요?',
+                  style: const TextStyle(
+                    color: AppColors.accent,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -102,9 +134,9 @@ class _EmailLoginDialogState extends State<_EmailLoginDialog> {
         ),
         TextButton(
           onPressed: _submit,
-          child: const Text(
-            '로그인',
-            style: TextStyle(
+          child: Text(
+            _isSignUp ? '가입하기' : '로그인',
+            style: const TextStyle(
               color: AppColors.accent,
               fontWeight: FontWeight.w600,
             ),

@@ -59,6 +59,12 @@ String? authErrorMessage(Object error) {
       case 'operation-not-allowed':
         return '이메일 로그인이 꺼져 있습니다. '
             '파이어베이스 콘솔에서 이메일/비밀번호를 켜주세요.';
+
+      // 여기부터는 회원가입에서 나오는 코드들.
+      case 'email-already-in-use':
+        return '이미 가입된 이메일입니다. 로그인해주세요.';
+      case 'weak-password':
+        return '비밀번호가 너무 짧습니다. 6자 이상으로 지어주세요.';
     }
 
     // LoginUtil에서 이미 사람이 읽을 문장으로 바꿔 던진 경우가 있다.

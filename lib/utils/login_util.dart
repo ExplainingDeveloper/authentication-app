@@ -73,6 +73,46 @@ class LoginUtil {
     );
   }
 
+  /// 이메일과 비밀번호로 회원가입한다.
+  ///
+  /// 소셜 로그인과 가장 다른 점이 여기다.
+  /// 구글이나 애플은 그쪽에 이미 계정이 있어서 "가입"이라는 단계가 없다.
+  /// 이메일은 우리가 계정을 직접 만들어야 하므로 가입과 로그인이 나뉜다.
+  ///
+  /// 가입에 성공하면 그대로 로그인된 상태가 된다. 따로 로그인할 필요가 없다.
+  ///
+  /// 비밀번호는 우리가 저장하지 않는다.
+  ///
+  /// 이 코드 어디에도 비밀번호를 어딘가에 적어두는 부분이 없다.
+  /// 파이어베이스가 받아서 되돌릴 수 없는 형태로 바꿔(해시) 보관한다.
+  /// 비밀번호를 직접 데이터베이스에 넣는 건 사고가 나면 피해가 크기 때문에,
+  /// 그 위험한 일을 파이어베이스가 대신 해주는 것이다.
+  Future<UserCredential> signUpWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    final UserCredential credential = await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(
+          email: email.trim(),
+          password: password,
+        );
+
+    // 가입한 주소가 진짜 본인 것인지 확인하는 메일을 보낸다.
+    //
+    // 아무 이메일이나 적어도 가입은 되기 때문에 넣어두는 것이다.
+    // 꼭 해야 하는 건 아니지만 실제 서비스라면 넣는 쪽이 좋고,
+    // 다중 인증(챕터 6)은 이메일 인증이 끝난 계정에서만 켤 수 있다.
+    //
+    // 메일을 못 보내도 가입 자체는 끝난 상태라 실패로 처리하지 않는다.
+    try {
+      await credential.user?.sendEmailVerification();
+    } catch (_) {
+      // 메일 발송에 실패해도 로그인은 그대로 진행한다.
+    }
+
+    return credential;
+  }
+
   /// 로그인 없이 둘러보기. (익명 로그인)
   ///
   /// 이것도 앱 심사용으로 넣어둔 참고 코드다.
